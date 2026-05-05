@@ -145,7 +145,7 @@ export const DEFAULTS: CalculatorInputs = {
 
   uurtarief: 32, // CAO VVT verpleegkundige niv. 4 + 55% wgv-lasten
 
-  careUpPrijsPerGebruiker: 30, // staffel-tarief voor 250 mw
+  careUpPrijsPerGebruiker: 24.5, // staffel band 101-250 = €6.125 vast / 250 = €24,50
 
   reductieVerlorenUren: 0.5,
   reductieSkillslab: 0.3,

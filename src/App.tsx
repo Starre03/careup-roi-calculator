@@ -12,11 +12,11 @@
  *  - Bijscholing verloren werkdag: 8 u × €32 = €256/mw/jr   (volledig doorbetaald loon)
  *  - Reducties: uren 50%, skillslab 30%, bijscholing 40%, reiskosten 50%
  *
- * CAREUP VOLUMESTAFFEL (instellingstarief, custom — zie lib/pricing.ts)
- *  25-49 mw  → €65/jr      500-999 mw  → €25/jr
- *  50-99 mw  → €50/jr      1000-2499  → €20/jr
- *  100-249   → €40/jr      2500+      → €17/jr
- *  250-499   → €30/jr
+ * CAREUP VOLUMESTAFFEL 2025 (vaste prijs per band — zie lib/pricing.ts)
+ *  Tot 10 mw   → €550 vast   (~€55/mw)    101-250 mw  → €6.125 vast   (~€35/mw)
+ *  11-25       → €1.250 vast (~€50/mw)    251-500     → €11.250 vast  (~€30/mw)
+ *  26-50       → €1.750 vast (~€45/mw)    501-1000    → €18.750 vast  (~€25/mw)
+ *  51-100      → €3.000 vast (~€40/mw)    1001+       → €30.000 vast  (~€20/mw)
  *
  * PER MEDEWERKER (250 mw, VVT defaults):
  *   Huidig totaal: €732/jr
@@ -53,7 +53,7 @@ import { Download, Printer, Briefcase, Users2 } from 'lucide-react';
 import { calculate, DEFAULTS, TYPE_ORGANISATIES, type CalculatorInputs } from './lib/calculations';
 import { exportToExcel } from './lib/excelExport';
 import { BRANCHE_PRESETS, BRANCHE_OMSCHRIJVING } from './lib/branchePresets';
-import { careUpVolumeStaffel } from './lib/pricing';
+import { careUpVolumeStaffel, careUpVasteJaarprijs, findStaffelBand, formatBandLabel } from './lib/pricing';
 import { decodeQueryToInputs, writeInputsToUrl } from './lib/urlState';
 import { InputField } from './components/InputField';
 import { ResultsPanel } from './components/ResultsPanel';
@@ -64,7 +64,12 @@ type Mode = 'sales' | 'bestuurder';
 const buildInitialInputs = (): CalculatorInputs => {
   if (typeof window === 'undefined') return DEFAULTS;
   const fromUrl = decodeQueryToInputs(window.location.search);
-  return { ...DEFAULTS, ...fromUrl };
+  const merged: CalculatorInputs = { ...DEFAULTS, ...fromUrl };
+  // Als CareUp-prijs niet expliciet in URL stond, bereken vanuit staffel voor de geladen N
+  if (fromUrl.careUpPrijsPerGebruiker === undefined) {
+    merged.careUpPrijsPerGebruiker = careUpVolumeStaffel(merged.aantalMedewerkers);
+  }
+  return merged;
 };
 
 export default function App() {
@@ -77,6 +82,9 @@ export default function App() {
 
   const r = useMemo(() => calculate(inputs), [inputs]);
   const bestuurderModus = mode === 'bestuurder';
+  const isOnderwijs = inputs.typeOrganisatie === 'Onderwijsinstelling';
+  const persoonsLabel = isOnderwijs ? 'student' : 'medewerker';
+  const persoonsLabelMv = isOnderwijs ? 'studenten' : 'medewerkers';
 
   // Sync inputs naar URL (replaceState — geen history-vervuiling)
   useEffect(() => {
@@ -104,6 +112,8 @@ export default function App() {
   };
 
   const staffelPrijs = careUpVolumeStaffel(inputs.aantalMedewerkers);
+  const vasteBandPrijs = careUpVasteJaarprijs(inputs.aantalMedewerkers);
+  const huidigeBand = findStaffelBand(inputs.aantalMedewerkers);
   const isStaffelTarief = inputs.careUpPrijsPerGebruiker === staffelPrijs;
 
   const handleTypeChange = (type: string) => {
@@ -192,10 +202,14 @@ export default function App() {
               <div className="mt-4">
                 <InputField
                   type="slider"
-                  label="Aantal zorgmedewerkers met voorbehouden handelingen"
+                  label={
+                    isOnderwijs
+                      ? 'Aantal studenten zorg-/welzijnsopleiding'
+                      : 'Aantal zorgmedewerkers met voorbehouden handelingen'
+                  }
                   value={inputs.aantalMedewerkers}
                   onChange={handleAantalChange}
-                  min={25}
+                  min={5}
                   max={5000}
                   step={5}
                   format="number"
@@ -213,7 +227,11 @@ export default function App() {
               <div className="mt-4 space-y-5">
                 <InputField
                   type="slider"
-                  label="Skillslab-kosten per medewerker per jaar"
+                  label={
+                    isOnderwijs
+                      ? `Skillslab-onderhoud/abonnement per ${persoonsLabel} per jaar`
+                      : `Skillslab-kosten per ${persoonsLabel} per jaar`
+                  }
                   value={inputs.skillslabPerMedewerker}
                   onChange={(v) => setI('skillslabPerMedewerker', v)}
                   min={0}
@@ -221,11 +239,17 @@ export default function App() {
                   step={5}
                   format="euro"
                   unit="€"
-                  tooltip="Jaarabonnement of toegang tot fysieke skillslab. Catharina Ziekenhuis €61,50, TMI bijscholing €229,95. Branchegemiddelde NL 2025-2026 ~€125 voor VVT, hoger voor ziekenhuis."
+                  tooltip={
+                    isOnderwijs
+                      ? 'Eigen skillslab onderhoud, materialen-abonnement of huur per student per jaar. Voor zorgopleidingen typisch €60-€120/student.'
+                      : 'Jaarabonnement of toegang tot fysieke skillslab. Catharina Ziekenhuis €61,50, TMI bijscholing €229,95. Branchegemiddelde NL 2025-2026 ~€125 voor VVT, hoger voor ziekenhuis.'
+                  }
                   hint=""
                 />
                 {!bestuurderModus && (
                   <div className="space-y-5">
+                {!isOnderwijs && (
+                  <>
                 <InputField
                   type="slider"
                   label="Reistijd skillslab-bezoeken (uren per medewerker per jaar)"
@@ -262,47 +286,69 @@ export default function App() {
                   unit="€"
                   tooltip="Bruto uurloon CAO VVT 2026 (€18-26 voor verpleegkundige niv. 4) + werkgeverslasten ~55% (sociale premies, vakantiegeld, eindejaarsuitkering, ORT). Ziekenhuis-personeel hoger (€42), ZZP-inhuur €45-60."
                 />
+                  </>
+                )}
                 <InputField
                   type="slider"
-                  label="Bijscholingsdagen voorbehouden handelingen per medewerker per jaar"
+                  label={
+                    isOnderwijs
+                      ? 'Praktijkuren fysiek skillslab per student per jaar'
+                      : 'Bijscholingsdagen voorbehouden handelingen per medewerker per jaar'
+                  }
                   value={inputs.bijscholingsdagen}
                   onChange={(v) => setI('bijscholingsdagen', v)}
                   min={0}
-                  max={3}
-                  step={0.25}
+                  max={isOnderwijs ? 200 : 3}
+                  step={isOnderwijs ? 5 : 0.25}
                   format="number"
-                  unit="dag"
-                  tooltip="VIG'ers moeten elke 3 jaar opnieuw getoetst worden, plus jaarlijkse opfris in praktijk. Default 1 dag/jaar conservatief — V&VN-richtlijn."
+                  unit={isOnderwijs ? 'uur' : 'dag'}
+                  tooltip={
+                    isOnderwijs
+                      ? 'Aantal contacturen in fysiek skillslab per student per studiejaar. HBO-V/MBO-zorg typisch 40-80 uur, plus extra voor specialisaties.'
+                      : "VIG'ers moeten elke 3 jaar opnieuw getoetst worden, plus jaarlijkse opfris in praktijk. Default 1 dag/jaar conservatief — V&VN-richtlijn."
+                  }
                 />
                 <InputField
                   type="slider"
-                  label="Kosten per externe bijscholingsdag"
+                  label={
+                    isOnderwijs
+                      ? 'Kostprijs per uur fysiek skillslab (per student)'
+                      : 'Kosten per externe bijscholingsdag'
+                  }
                   value={inputs.kostenPerBijscholingsdag}
                   onChange={(v) => setI('kostenPerBijscholingsdag', v)}
-                  min={50}
-                  max={400}
-                  step={5}
+                  min={isOnderwijs ? 5 : 50}
+                  max={isOnderwijs ? 80 : 400}
+                  step={isOnderwijs ? 1 : 5}
                   format="euro"
                   unit="€"
-                  tooltip="Cursusprijs zelf (excl. salaris). Marktgemiddelde NL: TMI €230 incl. praktijktoets, externe trainer in groepsverband €54-€100, ROC-cursus €200-€300, in-house trainer ~€150."
+                  tooltip={
+                    isOnderwijs
+                      ? 'Kostprijs per student per uur fysiek skillslab: instructeur (€50/u, ratio ~1:8 = €6/student) + materiaal/verbruik (€8-12/u) + lab-overhead. Default €18 conservatief.'
+                      : 'Cursusprijs zelf (excl. salaris). Marktgemiddelde NL: TMI €230 incl. praktijktoets, externe trainer in groepsverband €54-€100, ROC-cursus €200-€300, in-house trainer ~€150.'
+                  }
                 />
-                <InputField
-                  type="slider"
-                  label="Werkdaguren doorbetaald per bijscholingsdag"
-                  value={inputs.urenPerBijscholingsdag}
-                  onChange={(v) => setI('urenPerBijscholingsdag', v)}
-                  min={4}
-                  max={10}
-                  step={0.5}
-                  format="number"
-                  unit="uur"
-                  tooltip="Een hele werkdag bijscholing = 8 uur doorbetaald loon (medewerker werkt niet, maar je betaalt wel salaris). Eventueel + vervangingskosten ZZP. Default 8u — dit is vaak vergeten in ROI-berekeningen."
-                />
+                {!isOnderwijs && (
+                  <InputField
+                    type="slider"
+                    label="Werkdaguren doorbetaald per bijscholingsdag"
+                    value={inputs.urenPerBijscholingsdag}
+                    onChange={(v) => setI('urenPerBijscholingsdag', v)}
+                    min={4}
+                    max={10}
+                    step={0.5}
+                    format="number"
+                    unit="uur"
+                    tooltip="Een hele werkdag bijscholing = 8 uur doorbetaald loon (medewerker werkt niet, maar je betaalt wel salaris). Eventueel + vervangingskosten ZZP. Default 8u — dit is vaak vergeten in ROI-berekeningen."
+                  />
+                )}
                   </div>
                 )}
                 {bestuurderModus && (
                   <p className="text-xs text-ink-muted">
-                    Reiskosten, reistijd, uurtarief en bijscholingsdetails zijn op Nederlandse branchegemiddelden gezet. Schakel naar Sales-modus om deze aan te passen.
+                    {isOnderwijs
+                      ? 'Praktijkuren-aantal en kostprijs zijn op gemiddeldes voor zorgopleidingen gezet. Schakel naar Sales-modus om deze aan te passen.'
+                      : 'Reiskosten, reistijd, uurtarief en bijscholingsdetails zijn op Nederlandse branchegemiddelden gezet. Schakel naar Sales-modus om deze aan te passen.'}
                   </p>
                 )}
               </div>
@@ -324,9 +370,19 @@ export default function App() {
               <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
                 <span className="badge">Individueel jaarabo: €129,50</span>
                 <span className="badge">Maandelijks: €12,95</span>
-                <span className="rounded-full bg-savings-light px-3 py-1 font-medium text-savings-dark">
-                  Volume-tarief {inputs.aantalMedewerkers} mw: €{staffelPrijs}/jr
-                </span>
+              </div>
+              <div className="mt-3 rounded border border-savings/30 bg-savings-light p-3">
+                <div className="text-xs font-medium uppercase tracking-wide text-savings-dark">
+                  Volumestaffel — band {formatBandLabel(huidigeBand)}
+                </div>
+                <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <span className="font-serif text-lg font-semibold text-savings-dark">
+                    €{vasteBandPrijs.toLocaleString('nl-NL')}/jr vast
+                  </span>
+                  <span className="text-xs text-savings-dark">
+                    = €{staffelPrijs.toLocaleString('nl-NL', { maximumFractionDigits: 2 })}/{persoonsLabel} bij {inputs.aantalMedewerkers} {persoonsLabelMv}
+                  </span>
+                </div>
               </div>
               <div className="mt-4">
                 <InputField

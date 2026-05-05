@@ -60,14 +60,20 @@ export const BRANCHE_PRESETS: Record<string, BranchePreset> = {
     reiskostenPerMedewerker: 55,
   },
   Onderwijsinstelling: {
-    // Trainen handelingen zelf, intern, minimale externe kosten
-    skillslabPerMedewerker: 70,
-    verlorenUren: 1,
-    uurtarief: 38,
-    bijscholingsdagen: 0.5,
-    kostenPerBijscholingsdag: 165,
-    urenPerBijscholingsdag: 8,
-    reiskostenPerMedewerker: 20,
+    // ANDERE KOSTENSTRUCTUUR — geen werkgeverskosten, wel praktijkuren in fysiek lab.
+    // De velden worden hergebruikt als:
+    //   skillslabPerMedewerker  = onderhoud/abonnement eigen skillslab per student/jaar
+    //   bijscholingsdagen       = praktijkuren in fysiek skillslab per student/jaar
+    //   kostenPerBijscholingsdag = kostprijs per uur fysiek lesuur (instructeur+materiaal/student)
+    //   urenPerBijscholingsdag  = 0 (studenten worden niet doorbetaald)
+    //   verlorenUren / reiskosten = 0 (intern lab, geen reizen)
+    skillslabPerMedewerker: 70, // eigen lab abo/onderhoud per student/jaar
+    verlorenUren: 0,
+    uurtarief: 32, // niet relevant maar voor consistentie
+    bijscholingsdagen: 60, // gemiddelde praktijkuren skillslab voor zorgopleiding
+    kostenPerBijscholingsdag: 18, // kostprijs/student/uur (instructeur 1:8 + materiaal)
+    urenPerBijscholingsdag: 0, // studenten worden niet doorbetaald
+    reiskostenPerMedewerker: 0, // intern lab
   },
   Anders: {
     skillslabPerMedewerker: 125,
@@ -85,6 +91,6 @@ export const BRANCHE_OMSCHRIJVING: Record<string, string> = {
   Ziekenhuis: 'Hogere uurtarieven (gespecialiseerd personeel), intern lab dus weinig reizen, meer bijscholingsdagen.',
   GGZ: 'Minder voorbehouden handelingen per medewerker, lagere bijscholingsfrequentie.',
   Gehandicaptenzorg: 'Verspreide woonvoorzieningen, vergelijkbaar met VVT qua reistijd en bijscholing.',
-  Onderwijsinstelling: 'Trainen handelingen zelf — intern lab, minimale externe kosten.',
+  Onderwijsinstelling: 'Studenten zorgopleiding — kosten zijn fysiek skillslab + instructeurs-uren, geen werkgeverskosten.',
   Anders: 'Generieke defaults op basis van VVT-branchegemiddeldes.',
 };
