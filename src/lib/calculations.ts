@@ -147,10 +147,14 @@ export const DEFAULTS: CalculatorInputs = {
 
   careUpPrijsPerGebruiker: 24.5, // staffel band 101-250 = €6.125 vast / 250 = €24,50
 
-  reductieVerlorenUren: 0.5,
-  reductieSkillslab: 0.3,
-  reductieBijscholing: 0.4,
-  reductieReiskosten: 0.5, // schaalt mee met verloren uren (= minder bezoeken)
+  // Reducties — wat vervangt CareUp daadwerkelijk?
+  // CareUp levert V&VN-geaccrediteerde toetsen + tentamens + BIG-punten,
+  // dus het meeste theoretisch deel + oefenen kan virtueel.
+  // Alleen periodieke fysieke praktijktoets door beoordelaar blijft.
+  reductieVerlorenUren: 0.8,
+  reductieSkillslab: 0.7,
+  reductieBijscholing: 0.75,
+  reductieReiskosten: 0.8,
 };
 
 export const TYPE_ORGANISATIES = [

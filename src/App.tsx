@@ -10,7 +10,18 @@
  *  - Reiskosten:             €60/mw/jr      (CAO €0,23/km × 4 bezoeken × 65 km retour)
  *  - Bijscholing cursus:     1 dag × €195   (gemiddelde TMI/ROC/in-house)
  *  - Bijscholing verloren werkdag: 8 u × €32 = €256/mw/jr   (volledig doorbetaald loon)
- *  - Reducties: uren 50%, skillslab 30%, bijscholing 40%, reiskosten 50%
+ *
+ * REDUCTIES — onderbouwd op basis van wat CareUp daadwerkelijk vervangt:
+ *  CareUp levert V&VN-geaccrediteerde toetsen + tentamens + BIG-herregistratiepunten.
+ *  Daarmee vervangt het meeste theoretisch deel én oefenmomenten. Alleen periodieke
+ *  praktijktoets door beoordelaar voor risicohandelingen (bv. infuus) blijft fysiek.
+ *
+ *  Zorg (VVT/Gehandicaptenzorg/GGZ/Anders):
+ *    skillslab 70%, reistijd 80%, bijscholing 75%, reiskosten 80%
+ *  Ziekenhuis (complexere handelingen → iets lager):
+ *    skillslab 60%, reistijd 70%, bijscholing 65%, reiskosten 70%
+ *  Onderwijs (studenten leren voor het eerst → fysieke praktijk cruciaal):
+ *    skillslab 15%, reistijd 20%, bijscholing 35%, reiskosten 20%
  *
  * CAREUP VOLUMESTAFFEL 2025 (vaste prijs per band — zie lib/pricing.ts)
  *  Tot 10 mw   → €550 vast   (~€55/mw)    101-250 mw  → €6.125 vast   (~€35/mw)
@@ -18,34 +29,22 @@
  *  26-50       → €1.750 vast (~€45/mw)    501-1000    → €18.750 vast  (~€25/mw)
  *  51-100      → €3.000 vast (~€40/mw)    1001+       → €30.000 vast  (~€20/mw)
  *
- * PER MEDEWERKER (250 mw, VVT defaults):
- *   Huidig totaal: €732/jr
- *     Skillslab          €125
- *     Reistijd           €96  (3 u × €32)
- *     Reiskosten         €60
- *     Bijscholing cursus €195
- *     Bijscholing dag    €256 (8 u × €32)
+ * VERWACHTE UITKOMSTEN PER ORGANISATIE (VVT defaults, nieuwe reducties 70/80/75/80%):
+ *  100 mw  (€3.000 vast)  : Huidig €73.200    | Besparing ~€53.715 | ROI ~1.690%
+ *  250 mw  (€6.125 vast)  : Huidig €183.000   | Besparing ~€135.230 | ROI ~2.107%
+ *  500 mw  (€11.250 vast) : Huidig €366.000   | Besparing ~€269.450 | ROI ~2.295%
+ *  1500 mw (€30.000 vast) : Huidig €1.098.000 | Besparing ~€811.350 | ROI ~2.604%
  *
- *   Met CareUp totaal: €324,30/jr
- *     CareUp licentie    €30
- *     Rest skillslab     €87,50  (70%)
- *     Rest reistijd      €48     (50%)
- *     Rest reiskosten    €30     (50%)
- *     Rest bijscholing   €128,80 (60% × €214,60 cursus+dag samen — wait of total bijscholing €451)
+ * Per medewerker (250 mw VVT):
+ *   Huidig €732/jr → Met CareUp ~€191/jr → Besparing ~€541/mw/jr (~74%)
  *
- *   Besparing: ~€407/mw/jr
- *   ROI: ~1360% op licentie-investering
+ * Onderwijsinstelling (250 studenten, eigen reducties 15/20/35/20%):
+ *   Huidig €287.500 | Besparing ~€96.738 | ROI ~1.480%
  *
- * VERWACHTE TEST-UITKOMSTEN PER ORGANISATIE (defaults VVT, reducties 50/30/40/50%)
- *  100 mw  (€40/jr)  : Huidig €73.200  | CareUp €36.030  | Besparing €37.170 | ROI ~929%
- *  250 mw  (€30/jr)  : Huidig €183.000 | CareUp €81.075  | Besparing €101.925 | ROI ~1360%
- *  500 mw  (€30/jr)  : Huidig €366.000 | CareUp €162.150 | Besparing €203.850 | ROI ~1360%
- *  1500 mw (€20/jr)  : Huidig €1.098.000 | CareUp €456.450 | Besparing €641.550 | ROI ~2138%
- *
- * Met de eerlijkere kostenmodellering wordt nu duidelijk waarom digitale
- * oefenplatforms voor zorgorganisaties zo aantrekkelijk zijn: de écht grote
- * post is verloren productiviteit (8 u doorbetaald per bijscholingsdag),
- * niet de cursusprijs zelf.
+ * Met de eerlijke vervangings-percentages (CareUp levert V&VN-accreditatie!)
+ * wordt nu duidelijk waarom digitale oefenplatforms voor zorgorganisaties
+ * zo aantrekkelijk zijn — niet alleen kosten van fysiek skillslab maar ook
+ * de doorbetaalde werkdag bij elke bijscholing valt grotendeels weg.
  */
 
 import { useState, useMemo, useEffect, useRef } from 'react';
@@ -426,17 +425,27 @@ export default function App() {
                 </button>
                 {advancedOpen && (
                   <div className="mt-4 space-y-5">
+                    <p className="rounded bg-careup-50 p-3 text-xs text-careup-800">
+                      <strong>Wat vervangt CareUp?</strong> CareUp levert V&VN-geaccrediteerde toetsen, tentamens, BIG-herregistratiepunten en certificaten. Daarmee vervalt het overgrote deel van fysieke skillslab-oefeningen en bijscholingsdagen. Alleen voor specifieke risicohandelingen (bv. infuus inbrengen) blijft een periodieke fysieke praktijktoets door een beoordelaar nodig.
+                      {isOnderwijs && (
+                        <>
+                          <br />
+                          <strong className="block mt-2">Voor onderwijs ligt dit anders:</strong>
+                          studenten moeten skills voor het eerst leren — fysieke oefening blijft cruciaal, CareUp is aanvulling op practicum.
+                        </>
+                      )}
+                    </p>
                     <InputField
                       type="slider"
-                      label="Reductie verloren werkuren met CareUp"
+                      label="Reductie reistijd skillslab-bezoeken"
                       value={Math.round(inputs.reductieVerlorenUren * 100)}
                       onChange={(v) => setI('reductieVerlorenUren', v / 100)}
-                      min={20}
-                      max={80}
+                      min={0}
+                      max={95}
                       step={5}
                       format="percent"
                       unit="%"
-                      tooltip="Medewerkers oefenen op werkplek of thuis, geen reistijd. Conservatieve aanname."
+                      tooltip="Door virtueel oefenen + zelfstudie vervalt de meeste reistijd. Medewerker oefent op werkplek of thuis, op eigen tempo. Alleen periodieke praktijktoets vereist nog reistijd."
                     />
                     <InputField
                       type="slider"
@@ -444,11 +453,11 @@ export default function App() {
                       value={Math.round(inputs.reductieSkillslab * 100)}
                       onChange={(v) => setI('reductieSkillslab', v / 100)}
                       min={0}
-                      max={70}
+                      max={95}
                       step={5}
                       format="percent"
                       unit="%"
-                      tooltip="CareUp vervangt fysiek skillslab niet volledig — praktijktoets blijft nodig. Wel minder oefenmomenten op locatie."
+                      tooltip="Oefenmomenten gaan virtueel; V&VN-geaccrediteerde toetsen worden via CareUp afgenomen. Alleen voor specifieke handelingen blijft een fysieke praktijkbeoordeling vereist (bv. 1× per 3 jaar). Reductie 60-80% realistisch voor zorg, lager voor onderwijs."
                     />
                     <InputField
                       type="slider"
@@ -456,11 +465,11 @@ export default function App() {
                       value={Math.round(inputs.reductieBijscholing * 100)}
                       onChange={(v) => setI('reductieBijscholing', v / 100)}
                       min={0}
-                      max={70}
+                      max={95}
                       step={5}
                       format="percent"
                       unit="%"
-                      tooltip="Theoretisch deel van bijscholing wordt gedekt door CareUp incl. accreditatie via V&VN. Reductie geldt op zowel cursusprijs als doorbetaalde werkdaguren."
+                      tooltip="CareUp dekt theorie + toetsen + accreditatiepunten via V&VN — meeste fysieke bijscholingsdagen kunnen vervallen of zelfstudie worden. Reductie geldt op zowel cursusprijs als doorbetaalde werkdag."
                     />
                     <InputField
                       type="slider"
@@ -468,11 +477,11 @@ export default function App() {
                       value={Math.round(inputs.reductieReiskosten * 100)}
                       onChange={(v) => setI('reductieReiskosten', v / 100)}
                       min={0}
-                      max={80}
+                      max={95}
                       step={5}
                       format="percent"
                       unit="%"
-                      tooltip="Minder reizen naar fysieke skillslab/cursus = lagere reiskostenvergoeding. Schaalt mee met reductie verloren uren."
+                      tooltip="Minder fysieke skillslab/cursus-bezoeken = lagere reiskostenvergoeding. Alleen voor jaarlijkse praktijktoetsen blijven enkele reizen nodig."
                     />
                   </div>
                 )}

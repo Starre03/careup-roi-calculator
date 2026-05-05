@@ -165,19 +165,19 @@ export const ResultsPanel = ({ r, bestuurderModus }: Props) => {
           <li className="flex gap-2">
             <Award className="mt-0.5 h-4 w-4 flex-shrink-0 text-careup-500" />
             <span>
-              <strong className="text-ink">IGJ-bewijslast:</strong> bij toezicht lever je direct aantoonbaar bekwaamheidsbewijs — accreditatiepunten worden automatisch bijgeschreven in het V&VN Kwaliteitsregister.
+              <strong className="text-ink">IGJ-bewijslast:</strong> bij toezicht lever je direct aantoonbaar bekwaamheidsbewijs — toetsresultaten en accreditatiepunten worden automatisch bijgeschreven in het V&VN Kwaliteitsregister.
             </span>
           </li>
           <li className="flex gap-2">
             <Award className="mt-0.5 h-4 w-4 flex-shrink-0 text-careup-500" />
             <span>
-              <strong className="text-ink">BIG-herregistratie</strong> (verplicht elke 5 jaar) — je medewerkers hebben altijd inzicht in eigen voortgang, certificaten en herregistratie-deadline.
+              <strong className="text-ink">BIG-herregistratie</strong> (verplicht elke 5 jaar) — CareUp levert direct accreditatiepunten via V&VN-geaccrediteerde toetsen en tentamens. Je medewerkers hebben actueel inzicht in punten, certificaten en herregistratie-deadlines.
             </span>
           </li>
           <li className="flex gap-2">
             <Award className="mt-0.5 h-4 w-4 flex-shrink-0 text-careup-500" />
             <span>
-              <strong className="text-ink">Wkkgz-naleving:</strong> de wet eist dat je kunt aantonen dat medewerkers bekwaam zijn voor risicovolle handelingen. CareUp levert dit bewijs voor de theoretische component.
+              <strong className="text-ink">Wkkgz-naleving:</strong> de wet eist dat je kunt aantonen dat medewerkers bekwaam zijn voor risicovolle handelingen. CareUp levert hiervoor volledig bewijs incl. V&VN-geaccrediteerde toetsen, tentamens en bekwaamheidsverklaringen.
             </span>
           </li>
         </ul>

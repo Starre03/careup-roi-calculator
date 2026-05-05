@@ -133,7 +133,11 @@ export const exportToExcel = (inputs: CalculatorInputs, r: CalculatorResults): v
     ],
     [
       'Compliance-kaders',
-      'IGJ (Inspectie Gezondheidszorg en Jeugd): bewijslast bekwaamheid. BIG-herregistratie: elke 5 jaar. Wkkgz: zorgaanbieder moet kunnen aantonen dat medewerkers bekwaam zijn voor risicovolle handelingen. V&VN Kwaliteitsregister: accreditatiepunten registratie.',
+      'IGJ: bewijslast bekwaamheid. BIG-herregistratie: elke 5 jaar. Wkkgz: zorgaanbieder moet kunnen aantonen dat medewerkers bekwaam zijn voor risicovolle handelingen. CareUp levert V&VN-geaccrediteerde toetsen, tentamens en certificaten — accreditatiepunten worden automatisch bijgeschreven in V&VN Kwaliteitsregister.',
+    ],
+    [
+      'Reducties — onderbouwing',
+      'CareUp levert V&VN-geaccrediteerde toetsen, tentamens en BIG-punten. Daarmee vervangt het ~70% van skillslab-bezoeken en ~75% van bijscholingsdagen voor zorgsectoren. Periodieke fysieke praktijktoets door beoordelaar blijft vereist voor specifieke risicohandelingen. Voor onderwijs ligt vervanging lager (~15-35%) want studenten moeten skills voor het eerst fysiek leren.',
     ],
     [
       'Disclaimer',

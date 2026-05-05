@@ -9,6 +9,10 @@ export type BranchePreset = Pick<
   | 'kostenPerBijscholingsdag'
   | 'urenPerBijscholingsdag'
   | 'reiskostenPerMedewerker'
+  | 'reductieSkillslab'
+  | 'reductieVerlorenUren'
+  | 'reductieBijscholing'
+  | 'reductieReiskosten'
 >;
 
 /**
@@ -18,9 +22,23 @@ export type BranchePreset = Pick<
  * Reiskosten zijn gebaseerd op CAO-vergoeding €0,23/km × geschat aantal
  * skillslab/cursus-bezoeken per jaar × gemiddelde retour-afstand.
  */
+/**
+ * REDUCTIES — wat vervangt CareUp daadwerkelijk?
+ *
+ * CareUp levert V&VN-geaccrediteerde toetsen + tentamens, BIG-herregistratie-punten,
+ * en certificaten. Voor zorgsectoren betekent dit dat het overgrote deel van
+ * fysieke bijscholing en oefenmomenten vervangen kan worden door virtuele simulatie.
+ *
+ * Wat blijft fysiek nodig:
+ *  - Periodieke praktijktoets door beoordelaar voor echte risicohandelingen (bv. infuus)
+ *  - In sommige organisaties: jaarlijks moment hands-on demo
+ *
+ * Voor onderwijs ligt het anders: studenten moeten skills voor het EERST leren.
+ * Daar is fysieke oefening cruciaal — CareUp is aanvulling, niet vervanging.
+ */
+
 export const BRANCHE_PRESETS: Record<string, BranchePreset> = {
   VVT: {
-    // Verspreide thuiszorg-locaties → veel reizen
     skillslabPerMedewerker: 125,
     verlorenUren: 3,
     uurtarief: 32,
@@ -28,9 +46,13 @@ export const BRANCHE_PRESETS: Record<string, BranchePreset> = {
     kostenPerBijscholingsdag: 195,
     urenPerBijscholingsdag: 8,
     reiskostenPerMedewerker: 60,
+    // CareUp levert accreditatie → meeste skillslab + bijscholing kan vervallen
+    reductieSkillslab: 0.7,
+    reductieVerlorenUren: 0.8,
+    reductieBijscholing: 0.75,
+    reductieReiskosten: 0.8,
   },
   Ziekenhuis: {
-    // Intern lab → minder reizen, maar duurder personeel + meer dagen bijscholing
     skillslabPerMedewerker: 165,
     verlorenUren: 2,
     uurtarief: 42,
@@ -38,9 +60,13 @@ export const BRANCHE_PRESETS: Record<string, BranchePreset> = {
     kostenPerBijscholingsdag: 240,
     urenPerBijscholingsdag: 8,
     reiskostenPerMedewerker: 25,
+    // Iets lager — meer complexe handelingen die fysieke beoordeling vereisen (OK, IC)
+    reductieSkillslab: 0.6,
+    reductieVerlorenUren: 0.7,
+    reductieBijscholing: 0.65,
+    reductieReiskosten: 0.7,
   },
   GGZ: {
-    // Minder voorbehouden handelingen, gemiddelde reizen
     skillslabPerMedewerker: 95,
     verlorenUren: 2,
     uurtarief: 36,
@@ -48,9 +74,12 @@ export const BRANCHE_PRESETS: Record<string, BranchePreset> = {
     kostenPerBijscholingsdag: 185,
     urenPerBijscholingsdag: 8,
     reiskostenPerMedewerker: 40,
+    reductieSkillslab: 0.7,
+    reductieVerlorenUren: 0.75,
+    reductieBijscholing: 0.75,
+    reductieReiskosten: 0.75,
   },
   Gehandicaptenzorg: {
-    // Vergelijkbaar met VVT, woonvoorzieningen verspreid
     skillslabPerMedewerker: 115,
     verlorenUren: 3,
     uurtarief: 30,
@@ -58,22 +87,28 @@ export const BRANCHE_PRESETS: Record<string, BranchePreset> = {
     kostenPerBijscholingsdag: 190,
     urenPerBijscholingsdag: 8,
     reiskostenPerMedewerker: 55,
+    reductieSkillslab: 0.7,
+    reductieVerlorenUren: 0.8,
+    reductieBijscholing: 0.75,
+    reductieReiskosten: 0.8,
   },
   Onderwijsinstelling: {
     // ANDERE KOSTENSTRUCTUUR — geen werkgeverskosten, wel praktijkuren in fysiek lab.
-    // De velden worden hergebruikt als:
-    //   skillslabPerMedewerker  = onderhoud/abonnement eigen skillslab per student/jaar
-    //   bijscholingsdagen       = praktijkuren in fysiek skillslab per student/jaar
-    //   kostenPerBijscholingsdag = kostprijs per uur fysiek lesuur (instructeur+materiaal/student)
-    //   urenPerBijscholingsdag  = 0 (studenten worden niet doorbetaald)
-    //   verlorenUren / reiskosten = 0 (intern lab, geen reizen)
-    skillslabPerMedewerker: 70, // eigen lab abo/onderhoud per student/jaar
+    // Velden hergebruikt: skillslab = lab-onderhoud/student, bijscholingsdagen = praktijkuren,
+    // kosten/dag = kostprijs/uur, urenPerBijscholingsdag = 0 (geen loon-doorbetaling).
+    skillslabPerMedewerker: 70,
     verlorenUren: 0,
-    uurtarief: 32, // niet relevant maar voor consistentie
-    bijscholingsdagen: 60, // gemiddelde praktijkuren skillslab voor zorgopleiding
-    kostenPerBijscholingsdag: 18, // kostprijs/student/uur (instructeur 1:8 + materiaal)
-    urenPerBijscholingsdag: 0, // studenten worden niet doorbetaald
-    reiskostenPerMedewerker: 0, // intern lab
+    uurtarief: 32,
+    bijscholingsdagen: 60,
+    kostenPerBijscholingsdag: 18,
+    urenPerBijscholingsdag: 0,
+    reiskostenPerMedewerker: 0,
+    // VOOR ONDERWIJS LAGER: studenten moeten skills FYSIEK aanleren.
+    // CareUp is aanvulling op practicum, niet vervanging.
+    reductieSkillslab: 0.15, // lab-onderhoud blijft grotendeels nodig
+    reductieVerlorenUren: 0.2,
+    reductieBijscholing: 0.35, // 35% van praktijkuren kan virtueel (theorie + voorbereiding)
+    reductieReiskosten: 0.2,
   },
   Anders: {
     skillslabPerMedewerker: 125,
@@ -83,6 +118,10 @@ export const BRANCHE_PRESETS: Record<string, BranchePreset> = {
     kostenPerBijscholingsdag: 195,
     urenPerBijscholingsdag: 8,
     reiskostenPerMedewerker: 60,
+    reductieSkillslab: 0.7,
+    reductieVerlorenUren: 0.8,
+    reductieBijscholing: 0.75,
+    reductieReiskosten: 0.8,
   },
 };
 
