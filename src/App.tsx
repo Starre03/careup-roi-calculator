@@ -135,17 +135,19 @@ export default function App() {
       <header className="border-b border-surface-line bg-white no-print">
         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3">
-              {/* Logo-mark */}
-              <div className="flex h-9 w-9 items-center justify-center rounded bg-careup-500 text-white">
-                <span className="font-heading text-lg font-bold">C</span>
-              </div>
-              <div>
-                <div className="font-heading text-lg font-bold text-careup-900 leading-tight">
-                  CareUp <span className="text-careup-500">·</span>{' '}
-                  <span className="text-careup-700">Virtual Learning Lab</span>
+            <div className="flex items-center gap-4">
+              <img
+                src="/careup-logo.png"
+                alt="CareUp · Virtual Learning Lab"
+                className="h-12 w-auto"
+                width={300}
+                height={97}
+              />
+              <div className="hidden sm:block border-l border-surface-line pl-4">
+                <div className="text-sm font-semibold text-careup-900 leading-tight">
+                  ROI-calculator
                 </div>
-                <div className="text-xs text-ink-muted">ROI-calculator voor zorgorganisaties</div>
+                <div className="text-xs text-ink-muted">voor zorgorganisaties</div>
               </div>
             </div>
             <ModeToggle mode={mode} onChange={setMode} />
