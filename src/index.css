@@ -1,0 +1,106 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+    color: #3a3a3a;
+    background: #ffffff;
+  }
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  h1, h2, h3, h4, h5 {
+    font-family: 'Quicksand', system-ui, sans-serif;
+    color: #1c5366;
+    letter-spacing: -0.01em;
+  }
+}
+
+@layer components {
+  .input-base {
+    @apply w-full rounded border border-surface-line bg-white px-3 py-2 text-sm text-ink outline-none transition-colors focus:border-careup-500 focus:ring-2 focus:ring-careup-500/20;
+  }
+  .label-base {
+    @apply text-sm font-medium text-ink;
+  }
+  .hint-base {
+    @apply text-xs text-ink-muted;
+  }
+  .group-card {
+    @apply rounded border border-surface-line bg-white p-5 shadow-soft;
+  }
+  .btn-primary {
+    @apply inline-flex items-center gap-2 rounded bg-careup-500 px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-careup-600 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-careup-500/40 active:scale-[0.98];
+    font-family: 'Quicksand', system-ui, sans-serif;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 rounded border border-careup-500 bg-white px-5 py-2.5 text-sm font-semibold text-careup-700 transition-all hover:bg-careup-50 focus:outline-none focus:ring-2 focus:ring-careup-500/40;
+    font-family: 'Quicksand', system-ui, sans-serif;
+  }
+  .badge {
+    @apply inline-flex items-center gap-1.5 rounded-full bg-careup-50 px-3 py-1 text-xs font-medium text-careup-700;
+  }
+  .heading-display {
+    font-family: 'Quicksand', system-ui, sans-serif;
+    font-weight: 700;
+    color: #1c5366;
+    letter-spacing: -0.02em;
+  }
+}
+
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  background: #daf3fa;
+  border-radius: 9999px;
+  outline: none;
+}
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #69c8e7;
+  cursor: pointer;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 4px rgba(105, 200, 231, 0.5);
+}
+input[type='range']::-webkit-slider-thumb:hover {
+  background: #3aaecf;
+}
+input[type='range']::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #69c8e7;
+  cursor: pointer;
+  border: 2px solid #ffffff;
+}
+
+/* Hide arrows on number inputs */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: white;
+  }
+  .group-card {
+    box-shadow: none;
+    border: 1px solid #ddd;
+  }
+}
