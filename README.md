@@ -47,7 +47,7 @@ Per medewerker: huidige kosten €381, CareUp-kosten €257,50, netto besparing 
 - CareUp-licentiekosten worden **apart** getoond, niet weggemoffeld.
 - Calculator kan **negatieve uitkomst** tonen als reducties op 0 staan (rood, "tekort" i.p.v. "besparing").
 - Defaults zijn **gebaseerd op publieke marktdata** Nederland 2025-2026.
-- Disclaimer onderaan: aanbeveling 90-dagen pilot (€5.950 vaste prijs).
+- Disclaimer onderaan: aanbeveling om uitkomst te valideren via een gratis 30-dagen demo (zie careup.online).
 
 ## Mappenstructuur
 

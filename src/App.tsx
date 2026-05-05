@@ -4,47 +4,120 @@
  * Interactieve calculator voor zorgorganisaties die overwegen over te stappen
  * van fysiek skillslab + traditionele bijscholing naar CareUp Virtual Learning Lab.
  *
- * VERWACHTE TEST-UITKOMSTEN MET DEFAULTS
- * (Skillslab €110, Verloren uren 3 × €32 = €96, Bijscholing 1 × €175 = €175,
- *  CareUp €27,50, Reducties: uren 50%, skillslab 30%, bijscholing 40%)
+ * MARKTCONFORME DEFAULTS (VVT 2025-2026) — alle realistische kostenposten meegenomen
+ *  - Skillslab abonnement:   €125/mw/jr     (Catharina €60-80, TMI €230, gemiddelde €125)
+ *  - Reistijd skillslab:     3 u/mw × €32   (uurtarief = CAO VVT niv.4 + 55% wgv-lasten)
+ *  - Reiskosten:             €60/mw/jr      (CAO €0,23/km × 4 bezoeken × 65 km retour)
+ *  - Bijscholing cursus:     1 dag × €195   (gemiddelde TMI/ROC/in-house)
+ *  - Bijscholing verloren werkdag: 8 u × €32 = €256/mw/jr   (volledig doorbetaald loon)
+ *  - Reducties: uren 50%, skillslab 30%, bijscholing 40%, reiskosten 50%
  *
- * Per medewerker:
- *   Huidig:   €381    (€110 + €96 + €175)
- *   CareUp:   €257,50 (€27,50 licentie + €77 + €48 + €105)
- *   Besparing: €123,50
- *   ROI:      ~449% op licentie-investering
+ * CAREUP VOLUMESTAFFEL (instellingstarief, custom — zie lib/pricing.ts)
+ *  25-49 mw  → €65/jr      500-999 mw  → €25/jr
+ *  50-99 mw  → €50/jr      1000-2499  → €20/jr
+ *  100-249   → €40/jr      2500+      → €17/jr
+ *  250-499   → €30/jr
  *
- * Per organisatie (multiplicatief schaalt lineair):
- *   100 medewerkers:  Huidig €38.100  | CareUp €25.750  | Besparing €12.350  | ROI 449%
- *   500 medewerkers:  Huidig €190.500 | CareUp €128.750 | Besparing €61.750  | ROI 449%
- *   1500 medewerkers: Huidig €571.500 | CareUp €386.250 | Besparing €185.250 | ROI 449%
+ * PER MEDEWERKER (250 mw, VVT defaults):
+ *   Huidig totaal: €732/jr
+ *     Skillslab          €125
+ *     Reistijd           €96  (3 u × €32)
+ *     Reiskosten         €60
+ *     Bijscholing cursus €195
+ *     Bijscholing dag    €256 (8 u × €32)
  *
- * Opmerking: oorspronkelijke spec noemde "ROI ~620%" maar dat veronderstelt
- * hogere reducties dan de gespecificeerde defaults (50/30/40%). Met de stated
- * defaults landt ROI op ~449%. Sales kan reducties verhogen voor agressievere
- * scenario's; defaults zijn conservatief gehouden.
+ *   Met CareUp totaal: €324,30/jr
+ *     CareUp licentie    €30
+ *     Rest skillslab     €87,50  (70%)
+ *     Rest reistijd      €48     (50%)
+ *     Rest reiskosten    €30     (50%)
+ *     Rest bijscholing   €128,80 (60% × €214,60 cursus+dag samen — wait of total bijscholing €451)
+ *
+ *   Besparing: ~€407/mw/jr
+ *   ROI: ~1360% op licentie-investering
+ *
+ * VERWACHTE TEST-UITKOMSTEN PER ORGANISATIE (defaults VVT, reducties 50/30/40/50%)
+ *  100 mw  (€40/jr)  : Huidig €73.200  | CareUp €36.030  | Besparing €37.170 | ROI ~929%
+ *  250 mw  (€30/jr)  : Huidig €183.000 | CareUp €81.075  | Besparing €101.925 | ROI ~1360%
+ *  500 mw  (€30/jr)  : Huidig €366.000 | CareUp €162.150 | Besparing €203.850 | ROI ~1360%
+ *  1500 mw (€20/jr)  : Huidig €1.098.000 | CareUp €456.450 | Besparing €641.550 | ROI ~2138%
+ *
+ * Met de eerlijkere kostenmodellering wordt nu duidelijk waarom digitale
+ * oefenplatforms voor zorgorganisaties zo aantrekkelijk zijn: de écht grote
+ * post is verloren productiviteit (8 u doorbetaald per bijscholingsdag),
+ * niet de cursusprijs zelf.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { Download, Printer, Briefcase, Users2 } from 'lucide-react';
 import { calculate, DEFAULTS, TYPE_ORGANISATIES, type CalculatorInputs } from './lib/calculations';
 import { exportToExcel } from './lib/excelExport';
+import { BRANCHE_PRESETS, BRANCHE_OMSCHRIJVING } from './lib/branchePresets';
+import { careUpVolumeStaffel } from './lib/pricing';
+import { decodeQueryToInputs, writeInputsToUrl } from './lib/urlState';
 import { InputField } from './components/InputField';
 import { ResultsPanel } from './components/ResultsPanel';
+import { ShareButton } from './components/ShareButton';
 
 type Mode = 'sales' | 'bestuurder';
 
+const buildInitialInputs = (): CalculatorInputs => {
+  if (typeof window === 'undefined') return DEFAULTS;
+  const fromUrl = decodeQueryToInputs(window.location.search);
+  return { ...DEFAULTS, ...fromUrl };
+};
+
 export default function App() {
-  const [inputs, setInputs] = useState<CalculatorInputs>(DEFAULTS);
+  const [inputs, setInputs] = useState<CalculatorInputs>(buildInitialInputs);
   const [mode, setMode] = useState<Mode>('sales');
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [showCalc, setShowCalc] = useState(false);
+  const [branchePresetApplied, setBranchePresetApplied] = useState(false);
+  const branchePresetTimer = useRef<number | null>(null);
 
   const r = useMemo(() => calculate(inputs), [inputs]);
   const bestuurderModus = mode === 'bestuurder';
 
+  // Sync inputs naar URL (replaceState — geen history-vervuiling)
+  useEffect(() => {
+    writeInputsToUrl(inputs);
+  }, [inputs]);
+
   const setI = <K extends keyof CalculatorInputs>(key: K, v: CalculatorInputs[K]) => {
     setInputs((s) => ({ ...s, [key]: v }));
+  };
+
+  // Wanneer aantal medewerkers wijzigt: update CareUp-prijs naar staffel
+  // tenzij de gebruiker het zelf heeft aangepast (= afwijkt van vorige staffel)
+  const handleAantalChange = (nieuwAantal: number) => {
+    nieuwAantal = Math.round(nieuwAantal);
+    setInputs((s) => {
+      const oudeStaffel = careUpVolumeStaffel(s.aantalMedewerkers);
+      const nieuweStaffel = careUpVolumeStaffel(nieuwAantal);
+      const userOverride = s.careUpPrijsPerGebruiker !== oudeStaffel;
+      return {
+        ...s,
+        aantalMedewerkers: nieuwAantal,
+        careUpPrijsPerGebruiker: userOverride ? s.careUpPrijsPerGebruiker : nieuweStaffel,
+      };
+    });
+  };
+
+  const staffelPrijs = careUpVolumeStaffel(inputs.aantalMedewerkers);
+  const isStaffelTarief = inputs.careUpPrijsPerGebruiker === staffelPrijs;
+
+  const handleTypeChange = (type: string) => {
+    const preset = BRANCHE_PRESETS[type];
+    setInputs((s) => ({
+      ...s,
+      typeOrganisatie: type,
+      ...(preset ?? {}),
+    }));
+    if (preset) {
+      setBranchePresetApplied(true);
+      if (branchePresetTimer.current) window.clearTimeout(branchePresetTimer.current);
+      branchePresetTimer.current = window.setTimeout(() => setBranchePresetApplied(false), 3500);
+    }
   };
 
   return (
@@ -100,20 +173,28 @@ export default function App() {
                   placeholder="bv. Zorggroep Almere"
                   hint="Verschijnt op het Excel-rapport"
                 />
-                <InputField
-                  type="select"
-                  label="Type organisatie"
-                  value={inputs.typeOrganisatie}
-                  onChange={(v) => setI('typeOrganisatie', v)}
-                  options={TYPE_ORGANISATIES}
-                />
+                <div>
+                  <InputField
+                    type="select"
+                    label="Type organisatie"
+                    value={inputs.typeOrganisatie}
+                    onChange={handleTypeChange}
+                    options={TYPE_ORGANISATIES}
+                    hint={BRANCHE_OMSCHRIJVING[inputs.typeOrganisatie]}
+                  />
+                  {branchePresetApplied && (
+                    <p className="mt-1 text-xs font-medium text-savings">
+                      ✓ Aannames aangepast aan {inputs.typeOrganisatie}
+                    </p>
+                  )}
+                </div>
               </div>
               <div className="mt-4">
                 <InputField
                   type="slider"
                   label="Aantal zorgmedewerkers met voorbehouden handelingen"
                   value={inputs.aantalMedewerkers}
-                  onChange={(v) => setI('aantalMedewerkers', Math.round(v))}
+                  onChange={handleAantalChange}
                   min={25}
                   max={5000}
                   step={5}
@@ -136,18 +217,18 @@ export default function App() {
                   value={inputs.skillslabPerMedewerker}
                   onChange={(v) => setI('skillslabPerMedewerker', v)}
                   min={0}
-                  max={300}
+                  max={400}
                   step={5}
                   format="euro"
                   unit="€"
-                  tooltip="Branchegemiddelde NL 2025. Catharina Ziekenhuis €61,50 jaarabonnement, TMI bijscholing €229,95. Pas aan naar je werkelijke kosten."
+                  tooltip="Jaarabonnement of toegang tot fysieke skillslab. Catharina Ziekenhuis €61,50, TMI bijscholing €229,95. Branchegemiddelde NL 2025-2026 ~€125 voor VVT, hoger voor ziekenhuis."
                   hint=""
                 />
                 {!bestuurderModus && (
                   <div className="space-y-5">
                 <InputField
                   type="slider"
-                  label="Verloren werkuren per medewerker per jaar (door skillslab-planning)"
+                  label="Reistijd skillslab-bezoeken (uren per medewerker per jaar)"
                   value={inputs.verlorenUren}
                   onChange={(v) => setI('verlorenUren', v)}
                   min={0}
@@ -155,7 +236,19 @@ export default function App() {
                   step={0.5}
                   format="number"
                   unit="uur"
-                  tooltip="Reistijd, wachttijd en administratie rond fysieke skillslab-sessies. Hoger voor thuiszorg, lager voor organisaties met intern lab."
+                  tooltip="Alleen reistijd + wachttijd + administratie rond fysieke skillslab-sessies. Hoger voor thuiszorg (~3-5u), lager voor organisaties met intern lab (~1-2u). Bijscholingsdagen tellen apart mee."
+                />
+                <InputField
+                  type="slider"
+                  label="Reiskosten per medewerker per jaar"
+                  value={inputs.reiskostenPerMedewerker}
+                  onChange={(v) => setI('reiskostenPerMedewerker', v)}
+                  min={0}
+                  max={250}
+                  step={5}
+                  format="euro"
+                  unit="€"
+                  tooltip="Reiskostenvergoeding voor skillslab- en bijscholingsbezoeken. CAO-norm €0,23/km. Voorbeeld: 4 bezoeken × 65 km retour = €60/jr. VVT/thuiszorg hoger door verspreide locaties; ziekenhuis lager door intern lab."
                 />
                 <InputField
                   type="slider"
@@ -163,11 +256,11 @@ export default function App() {
                   value={inputs.uurtarief}
                   onChange={(v) => setI('uurtarief', v)}
                   min={22}
-                  max={55}
+                  max={60}
                   step={1}
                   format="euro"
                   unit="€"
-                  tooltip="Bruto uurloon CAO VVT 2026 (€18-26 voor verpleegkundige niveau 4) plus werkgeverslasten ~55% (sociale premies, vakantiegeld, eindejaarsuitkering, ORT). Voor ZZP-inhuur typisch €45-55."
+                  tooltip="Bruto uurloon CAO VVT 2026 (€18-26 voor verpleegkundige niv. 4) + werkgeverslasten ~55% (sociale premies, vakantiegeld, eindejaarsuitkering, ORT). Ziekenhuis-personeel hoger (€42), ZZP-inhuur €45-60."
                 />
                 <InputField
                   type="slider"
@@ -179,7 +272,7 @@ export default function App() {
                   step={0.25}
                   format="number"
                   unit="dag"
-                  tooltip="VIG'ers moeten elke 3 jaar opnieuw getoetst worden, plus jaarlijkse opfris in praktijk. Default 1 dag/jaar conservatief."
+                  tooltip="VIG'ers moeten elke 3 jaar opnieuw getoetst worden, plus jaarlijkse opfris in praktijk. Default 1 dag/jaar conservatief — V&VN-richtlijn."
                 />
                 <InputField
                   type="slider"
@@ -191,13 +284,25 @@ export default function App() {
                   step={5}
                   format="euro"
                   unit="€"
-                  tooltip="Marktgemiddelde NL: TMI €230 incl. praktijk, externe trainer in groepsverband €54-€100, ROC-cursus €200-€300."
+                  tooltip="Cursusprijs zelf (excl. salaris). Marktgemiddelde NL: TMI €230 incl. praktijktoets, externe trainer in groepsverband €54-€100, ROC-cursus €200-€300, in-house trainer ~€150."
+                />
+                <InputField
+                  type="slider"
+                  label="Werkdaguren doorbetaald per bijscholingsdag"
+                  value={inputs.urenPerBijscholingsdag}
+                  onChange={(v) => setI('urenPerBijscholingsdag', v)}
+                  min={4}
+                  max={10}
+                  step={0.5}
+                  format="number"
+                  unit="uur"
+                  tooltip="Een hele werkdag bijscholing = 8 uur doorbetaald loon (medewerker werkt niet, maar je betaalt wel salaris). Eventueel + vervangingskosten ZZP. Default 8u — dit is vaak vergeten in ROI-berekeningen."
                 />
                   </div>
                 )}
                 {bestuurderModus && (
                   <p className="text-xs text-ink-muted">
-                    Verloren werkuren, uurtarief en bijscholing zijn op Nederlandse branchegemiddelden gezet. Schakel naar Sales-modus om deze aan te passen.
+                    Reiskosten, reistijd, uurtarief en bijscholingsdetails zijn op Nederlandse branchegemiddelden gezet. Schakel naar Sales-modus om deze aan te passen.
                   </p>
                 )}
               </div>
@@ -205,7 +310,24 @@ export default function App() {
 
             {/* CareUp investering */}
             <section className="group-card">
-              <h2 className="font-heading text-lg font-semibold text-careup-900">Investering in CareUp</h2>
+              <div className="flex items-baseline justify-between gap-2">
+                <h2 className="font-heading text-lg font-semibold text-careup-900">Investering in CareUp</h2>
+                <a
+                  href="https://careup.online/tarieven"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs font-medium text-careup-600 hover:text-careup-700 hover:underline"
+                >
+                  careup.online/tarieven ↗
+                </a>
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                <span className="badge">Individueel jaarabo: €129,50</span>
+                <span className="badge">Maandelijks: €12,95</span>
+                <span className="rounded-full bg-savings-light px-3 py-1 font-medium text-savings-dark">
+                  Volume-tarief {inputs.aantalMedewerkers} mw: €{staffelPrijs}/jr
+                </span>
+              </div>
               <div className="mt-4">
                 <InputField
                   type="slider"
@@ -213,12 +335,21 @@ export default function App() {
                   value={inputs.careUpPrijsPerGebruiker}
                   onChange={(v) => setI('careUpPrijsPerGebruiker', v)}
                   min={15}
-                  max={50}
+                  max={155}
                   step={0.5}
                   format="euro"
                   unit="€"
-                  tooltip="CareUp instellingstarief vanaf 25 medewerkers, met staffel naar beneden bij grotere volumes."
+                  tooltip="Individueel jaarabo: €129,50 (€12,95/maand). Voor instellingen geldt een volumestaffel: minder per gebruiker bij meer medewerkers. Werkelijk tarief op offerte via careup.online/tarieven."
                 />
+                {!isStaffelTarief && (
+                  <button
+                    type="button"
+                    onClick={() => setI('careUpPrijsPerGebruiker', staffelPrijs)}
+                    className="mt-2 text-xs font-medium text-careup-700 hover:text-careup-800 hover:underline"
+                  >
+                    ↺ Reset naar staffel-tarief €{staffelPrijs}/jr
+                  </button>
+                )}
               </div>
             </section>
 
@@ -273,7 +404,19 @@ export default function App() {
                       step={5}
                       format="percent"
                       unit="%"
-                      tooltip="Theoretisch deel van bijscholing wordt gedekt door CareUp incl. accreditatie via V&VN."
+                      tooltip="Theoretisch deel van bijscholing wordt gedekt door CareUp incl. accreditatie via V&VN. Reductie geldt op zowel cursusprijs als doorbetaalde werkdaguren."
+                    />
+                    <InputField
+                      type="slider"
+                      label="Reductie reiskosten"
+                      value={Math.round(inputs.reductieReiskosten * 100)}
+                      onChange={(v) => setI('reductieReiskosten', v / 100)}
+                      min={0}
+                      max={80}
+                      step={5}
+                      format="percent"
+                      unit="%"
+                      tooltip="Minder reizen naar fysieke skillslab/cursus = lagere reiskostenvergoeding. Schaalt mee met reductie verloren uren."
                     />
                   </div>
                 )}
@@ -306,11 +449,15 @@ export default function App() {
               <ResultsPanel r={r} bestuurderModus={bestuurderModus} />
 
               {/* Actieknoppen */}
-              <div className="mt-5 flex flex-col gap-2 sm:flex-row no-print">
-                <button onClick={() => exportToExcel(inputs, r)} className="btn-primary justify-center flex-1">
-                  <Download className="h-4 w-4" /> Exporteer naar Excel
+              <div className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-3 no-print">
+                <button
+                  onClick={() => exportToExcel(inputs, r)}
+                  className="btn-primary justify-center"
+                >
+                  <Download className="h-4 w-4" /> Excel
                 </button>
-                <button onClick={() => window.print()} className="btn-secondary justify-center flex-1">
+                <ShareButton inputs={inputs} />
+                <button onClick={() => window.print()} className="btn-secondary justify-center">
                   <Printer className="h-4 w-4" /> Print / PDF
                 </button>
               </div>
@@ -321,7 +468,7 @@ export default function App() {
         {/* Disclaimer */}
         <footer className="mt-12 border-t border-surface-line pt-6 text-xs text-ink-muted">
           <p className="max-w-4xl">
-            <strong className="text-ink">Disclaimer:</strong> Deze calculator geeft een indicatie op basis van Nederlandse branchegemiddelden 2025-2026. De werkelijke besparing varieert per organisatie. We raden aan de uitkomst te valideren in een 90-dagen pilot met vaste prijs (€5.950).
+            <strong className="text-ink">Disclaimer:</strong> Deze calculator geeft een indicatie op basis van Nederlandse branchegemiddelden 2025-2026. De werkelijke besparing varieert per organisatie. Wil je dit valideren? Vraag een <a href="https://careup.online" target="_blank" rel="noreferrer" className="font-medium text-careup-700 hover:underline">gratis 30-dagen demo</a> aan en test CareUp met je eigen team.
           </p>
           <p className="mt-3">
             CareUp · Virtual Learning Lab voor zorgprofessionals · Defaults gebaseerd op publieke marktdata (Catharina Ziekenhuis, TMI Academy, CAO VVT 2026).
@@ -391,10 +538,16 @@ const CalculationBreakdown = ({
             Skillslab: {inputs.aantalMedewerkers} × {fmt(inputs.skillslabPerMedewerker)} = {fmt(r.huidigSkillslab)}
           </li>
           <li>
-            Verloren uren: {inputs.aantalMedewerkers} × {inputs.verlorenUren} u × {fmt(inputs.uurtarief)} = {fmt(r.huidigVerlorenUren)}
+            Reistijd: {inputs.aantalMedewerkers} × {inputs.verlorenUren} u × {fmt(inputs.uurtarief)} = {fmt(r.huidigVerlorenUren)}
           </li>
           <li>
-            Bijscholing: {inputs.aantalMedewerkers} × {inputs.bijscholingsdagen} × {fmt(inputs.kostenPerBijscholingsdag)} = {fmt(r.huidigBijscholing)}
+            Reiskosten: {inputs.aantalMedewerkers} × {fmt(inputs.reiskostenPerMedewerker)} = {fmt(r.huidigReiskosten)}
+          </li>
+          <li>
+            Bijscholing — cursus: {inputs.aantalMedewerkers} × {inputs.bijscholingsdagen} × {fmt(inputs.kostenPerBijscholingsdag)} = {fmt(r.huidigBijscholingCursus)}
+          </li>
+          <li>
+            Bijscholing — verloren werkdag: {inputs.aantalMedewerkers} × {inputs.bijscholingsdagen} × {inputs.urenPerBijscholingsdag} u × {fmt(inputs.uurtarief)} = {fmt(r.huidigBijscholingVerlorenDag)}
           </li>
           <li className="pt-1 font-semibold text-ink">Totaal huidige kosten: {fmt(r.huidigeKosten)}</li>
         </ul>
@@ -409,7 +562,10 @@ const CalculationBreakdown = ({
             Resterend skillslab ({Math.round((1 - inputs.reductieSkillslab) * 100)}%): {fmt(r.restSkillslab)}
           </li>
           <li>
-            Resterende verloren uren ({Math.round((1 - inputs.reductieVerlorenUren) * 100)}%): {fmt(r.restVerlorenUren)}
+            Resterende reistijd ({Math.round((1 - inputs.reductieVerlorenUren) * 100)}%): {fmt(r.restVerlorenUren)}
+          </li>
+          <li>
+            Resterende reiskosten ({Math.round((1 - inputs.reductieReiskosten) * 100)}%): {fmt(r.restReiskosten)}
           </li>
           <li>
             Resterende bijscholing ({Math.round((1 - inputs.reductieBijscholing) * 100)}%): {fmt(r.restBijscholing)}

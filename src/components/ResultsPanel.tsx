@@ -1,4 +1,5 @@
-import { TrendingUp, TrendingDown, Calendar, Users, Award, BadgeCheck, Wallet } from 'lucide-react';
+import { TrendingUp, TrendingDown, Users, Award, BadgeCheck, Wallet } from 'lucide-react';
+import { MultiYearProjection } from './MultiYearProjection';
 import {
   BarChart,
   Bar,
@@ -136,17 +137,7 @@ export const ResultsPanel = ({ r, bestuurderModus }: Props) => {
         </div>
       )}
 
-      <div className="group-card">
-        <h3 className="text-base font-semibold text-careup-900 flex items-center gap-2">
-          <Calendar className="h-4 w-4" /> Cumulatief over 3 jaar
-        </h3>
-        <div className="mt-2 font-serif text-2xl font-semibold" style={{ color: accentColor }}>
-          <CountUp value={Math.abs(r.cumulatief3jaar)} format={(n) => formatEuro(n)} />
-        </div>
-        <p className="mt-1 text-xs text-ink-muted">
-          {positief ? 'Verwachte cumulatieve besparing' : 'Verwachte cumulatieve meerkosten'} bij gelijkblijvende inputs
-        </p>
-      </div>
+      <MultiYearProjection r={r} jaren={5} />
 
       {!bestuurderModus && (
         <div className="group-card">
