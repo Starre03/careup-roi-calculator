@@ -1,6 +1,7 @@
 import { TrendingUp, TrendingDown, Users, Award, BadgeCheck, Wallet } from 'lucide-react';
 import { MultiYearProjection } from './MultiYearProjection';
 import { BenchmarkPanel } from './BenchmarkPanel';
+import { CO2Panel } from './CO2Panel';
 import {
   BarChart,
   Bar,
@@ -42,7 +43,7 @@ export const ResultsPanel = ({ r, inputs, bestuurderModus }: Props) => {
           <CountUp
             value={Math.abs(r.besparing)}
             format={(n) => formatEuro(n)}
-            className="heading-display block text-5xl leading-tight"
+            className="heading-display block text-4xl leading-tight sm:text-5xl"
           />
         </div>
         <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm">
@@ -142,6 +143,8 @@ export const ResultsPanel = ({ r, inputs, bestuurderModus }: Props) => {
       {!bestuurderModus && <BenchmarkPanel inputs={inputs} r={r} />}
 
       <MultiYearProjection r={r} jaren={5} />
+
+      <CO2Panel inputs={inputs} r={r} />
 
       {!bestuurderModus && (
         <div className="group-card">

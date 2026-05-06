@@ -48,7 +48,7 @@
  */
 
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { Download, Printer, Briefcase, Users2 } from 'lucide-react';
+import { Download, Printer, Briefcase, Users2, RotateCcw } from 'lucide-react';
 import { calculate, DEFAULTS, TYPE_ORGANISATIES, type CalculatorInputs } from './lib/calculations';
 import { exportToExcel } from './lib/excelExport';
 import { BRANCHE_PRESETS, BRANCHE_OMSCHRIJVING } from './lib/branchePresets';
@@ -59,6 +59,9 @@ import { ResultsPanel } from './components/ResultsPanel';
 import { ShareButton } from './components/ShareButton';
 import { DemoCTA } from './components/DemoCTA';
 import { BronnenAccordion } from './components/BronnenAccordion';
+import { FAQAccordion } from './components/FAQAccordion';
+import { ScenarioPresets } from './components/ScenarioPresets';
+import { EmailButton } from './components/EmailButton';
 import { PrintReport } from './components/PrintReport';
 
 type Mode = 'sales' | 'bestuurder';
@@ -127,6 +130,24 @@ export default function App() {
     }
   };
 
+  const handleReset = () => {
+    setInputs({
+      ...DEFAULTS,
+      careUpPrijsPerGebruiker: careUpVolumeStaffel(DEFAULTS.aantalMedewerkers),
+    });
+  };
+
+  const handleLoadScenario = (preset: CalculatorInputs) => {
+    // Behoud organisatienaam als die al ingevuld is
+    setInputs((s) => ({
+      ...preset,
+      organisatieNaam: s.organisatieNaam || preset.organisatieNaam,
+    }));
+    setBranchePresetApplied(true);
+    if (branchePresetTimer.current) window.clearTimeout(branchePresetTimer.current);
+    branchePresetTimer.current = window.setTimeout(() => setBranchePresetApplied(false), 3500);
+  };
+
   return (
     <div className="min-h-screen bg-surface-alt">
       {/* Print-only rapport — verborgen op scherm, zichtbaar bij print/PDF */}
@@ -151,7 +172,18 @@ export default function App() {
                 <div className="text-xs text-ink-muted">voor zorgorganisaties</div>
               </div>
             </div>
-            <ModeToggle mode={mode} onChange={setMode} />
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleReset}
+                title="Alle waarden terug naar VVT-defaults"
+                className="inline-flex items-center gap-1 rounded border border-surface-line bg-white px-3 py-1.5 text-xs font-medium text-ink-soft transition-colors hover:border-careup-400 hover:text-careup-700"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Reset</span>
+              </button>
+              <ModeToggle mode={mode} onChange={setMode} />
+            </div>
           </div>
         </div>
       </header>
@@ -171,8 +203,11 @@ export default function App() {
       {/* Body */}
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-          {/* Linker kolom: inputs */}
-          <div className="space-y-5 lg:col-span-7">
+          {/* Linker kolom: inputs (op mobiel ONDER de resultaten) */}
+          <div className="order-2 space-y-5 lg:order-1 lg:col-span-7">
+            {/* Snel-laden scenario's */}
+            <ScenarioPresets onLoad={handleLoadScenario} />
+
             {/* Organisatie */}
             <section className="group-card">
               <h2 className="font-heading text-lg font-semibold text-careup-900">Jouw organisatie</h2>
@@ -551,8 +586,8 @@ export default function App() {
             )}
           </div>
 
-          {/* Rechter kolom: results */}
-          <aside className="lg:col-span-5">
+          {/* Rechter kolom: results (op mobiel BOVEN de inputs voor directe feedback) */}
+          <aside className="order-1 lg:order-2 lg:col-span-5">
             <div className="lg:sticky lg:top-6 space-y-4">
               <ResultsPanel r={r} inputs={inputs} bestuurderModus={bestuurderModus} />
 
@@ -560,24 +595,26 @@ export default function App() {
               <DemoCTA besparing={r.besparing} organisatieNaam={inputs.organisatieNaam} />
 
               {/* Actieknoppen */}
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 no-print">
+              <div className="grid grid-cols-2 gap-2 no-print">
                 <button
                   onClick={() => exportToExcel(inputs, r)}
                   className="btn-secondary justify-center"
                 >
                   <Download className="h-4 w-4" /> Excel
                 </button>
-                <ShareButton inputs={inputs} />
                 <button onClick={() => window.print()} className="btn-secondary justify-center">
                   <Printer className="h-4 w-4" /> PDF
                 </button>
+                <ShareButton inputs={inputs} />
+                <EmailButton inputs={inputs} r={r} />
               </div>
             </div>
           </aside>
         </div>
 
-        {/* Bronnen accordeon — onderaan voor wie de cijfers wil naslaan */}
-        <div className="mt-6">
+        {/* FAQ + Bronnen accordeon — onderaan voor wie meer wil weten */}
+        <div className="mt-6 space-y-4">
+          <FAQAccordion />
           <BronnenAccordion />
         </div>
 
