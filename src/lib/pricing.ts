@@ -7,8 +7,15 @@
  * Bij wisseling van band kan de prijs-per-gebruiker dus omhoog springen
  * (bv. 250 → 251 mw: van €24,50 naar €44,82). Dat is hoe staffels werken.
  *
- * Bron: CareUp officiële staffel 2025.
+ * Voor zeer kleine aantallen (< 5 mw) is het individuele jaarabo
+ * (€129,50/persoon/jaar) vaak goedkoper dan de instellingstaffel.
+ * `careUpEffectievePrijs` retourneert daarom altijd het laagste van beide.
+ *
+ * Bron: CareUp officiële staffel 2025 + careup.online/tarieven.
  */
+
+/** Prijs van het individuele jaarabonnement (2 maanden gratis t.o.v. maandabo €12,95) */
+export const INDIVIDUEEL_JAARABO = 129.5;
 
 export interface StaffelBand {
   vanaf: number;
@@ -36,14 +43,34 @@ export const findStaffelBand = (aantalMedewerkers: number): StaffelBand => {
   return STAFFEL_BANDEN[STAFFEL_BANDEN.length - 1];
 };
 
-/** Vaste jaarprijs voor de band waarin dit aantal medewerkers valt */
+/** Vaste jaarprijs voor de band waarin dit aantal medewerkers valt (instellingstaffel) */
 export const careUpVasteJaarprijs = (aantalMedewerkers: number): number =>
   findStaffelBand(aantalMedewerkers).vastePrijs;
 
-/** Afgeleide prijs per gebruiker: vaste jaarprijs / aantal medewerkers (afgerond op 2 decimalen) */
+/**
+ * Effectieve jaarprijs die CareUp factureert: het laagste van
+ *  - instellingstaffel-band-prijs, of
+ *  - individueel jaarabo × aantal medewerkers
+ *
+ * Voor 1-4 mw is individueel doorgaans goedkoper; voor 5+ mw de staffel.
+ */
+export const careUpEffectievePrijs = (aantalMedewerkers: number): number => {
+  const n = Math.max(aantalMedewerkers, 1);
+  const staffel = careUpVasteJaarprijs(n);
+  const individueel = n * INDIVIDUEEL_JAARABO;
+  return Math.min(staffel, individueel);
+};
+
+/** Welk tariefmodel is van toepassing voor dit aantal medewerkers? */
+export const isIndividueelGoedkoper = (aantalMedewerkers: number): boolean => {
+  const n = Math.max(aantalMedewerkers, 1);
+  return n * INDIVIDUEEL_JAARABO < careUpVasteJaarprijs(n);
+};
+
+/** Afgeleide prijs per gebruiker — gebaseerd op de effectieve jaarprijs */
 export const careUpVolumeStaffel = (aantalMedewerkers: number): number => {
   const n = Math.max(aantalMedewerkers, 1);
-  return Math.round((careUpVasteJaarprijs(aantalMedewerkers) / n) * 100) / 100;
+  return Math.round((careUpEffectievePrijs(aantalMedewerkers) / n) * 100) / 100;
 };
 
 export const formatBandLabel = (band: StaffelBand): string => {

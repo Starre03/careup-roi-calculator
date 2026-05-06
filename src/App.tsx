@@ -52,7 +52,15 @@ import { Download, Printer, Briefcase, Users2, RotateCcw } from 'lucide-react';
 import { calculate, DEFAULTS, TYPE_ORGANISATIES, type CalculatorInputs } from './lib/calculations';
 import { exportToExcel } from './lib/excelExport';
 import { BRANCHE_PRESETS, BRANCHE_OMSCHRIJVING } from './lib/branchePresets';
-import { careUpVolumeStaffel, careUpVasteJaarprijs, findStaffelBand, formatBandLabel } from './lib/pricing';
+import {
+  careUpVolumeStaffel,
+  careUpVasteJaarprijs,
+  careUpEffectievePrijs,
+  findStaffelBand,
+  formatBandLabel,
+  isIndividueelGoedkoper,
+  INDIVIDUEEL_JAARABO,
+} from './lib/pricing';
 import { decodeQueryToInputs, writeInputsToUrl } from './lib/urlState';
 import { InputField } from './components/InputField';
 import { ResultsPanel } from './components/ResultsPanel';
@@ -113,6 +121,8 @@ export default function App() {
 
   const staffelPrijs = careUpVolumeStaffel(inputs.aantalMedewerkers);
   const vasteBandPrijs = careUpVasteJaarprijs(inputs.aantalMedewerkers);
+  const effectievePrijs = careUpEffectievePrijs(inputs.aantalMedewerkers);
+  const individueelGoedkoper = isIndividueelGoedkoper(inputs.aantalMedewerkers);
   const huidigeBand = findStaffelBand(inputs.aantalMedewerkers);
   const heeftOverride = !!(inputs.careUpLicentieOverride && inputs.careUpLicentieOverride > 0);
 
@@ -246,9 +256,9 @@ export default function App() {
                   }
                   value={inputs.aantalMedewerkers}
                   onChange={handleAantalChange}
-                  min={5}
+                  min={1}
                   max={5000}
-                  step={5}
+                  step={1}
                   format="number"
                   unit=""
                 />
@@ -424,31 +434,55 @@ export default function App() {
                 <span className="badge">Maandelijks: €12,95</span>
               </div>
 
-              {/* Hoofd: vaste band-prijs uit staffel */}
-              <div className="mt-3 rounded border border-savings/30 bg-savings-light p-4">
-                <div className="text-xs font-medium uppercase tracking-wide text-savings-dark">
-                  CareUp volumestaffel 2025 — band {formatBandLabel(huidigeBand)}
+              {/* Hoofd: laat het tarief zien dat daadwerkelijk gefactureerd wordt */}
+              {individueelGoedkoper ? (
+                <div className="mt-3 rounded border border-savings/30 bg-savings-light p-4">
+                  <div className="text-xs font-medium uppercase tracking-wide text-savings-dark">
+                    Individueel jaarabo — voordeligst voor jouw aantal
+                  </div>
+                  <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                    <span className="font-serif text-2xl font-semibold text-savings-dark">
+                      €{effectievePrijs.toLocaleString('nl-NL', { maximumFractionDigits: 2 })}
+                    </span>
+                    <span className="text-sm text-savings-dark">
+                      per jaar — €{INDIVIDUEEL_JAARABO.toLocaleString('nl-NL', {
+                        minimumFractionDigits: 2,
+                      })}/{persoonsLabel} × {inputs.aantalMedewerkers} {persoonsLabelMv}
+                    </span>
+                  </div>
+                  <div className="mt-2 text-xs text-savings-dark/80">
+                    Voor minder dan 5 {persoonsLabelMv} is het individuele jaarabo voordeliger
+                    dan de instellingstaffel (€{vasteBandPrijs.toLocaleString('nl-NL')} vast).
+                    Vanaf 5 {persoonsLabelMv} schakelt de calculator automatisch over op het
+                    instellingstarief.
+                  </div>
                 </div>
-                <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                  <span className="font-serif text-2xl font-semibold text-savings-dark">
-                    €{vasteBandPrijs.toLocaleString('nl-NL')}
-                  </span>
-                  <span className="text-sm text-savings-dark">
-                    per jaar — vaste licentie ({inputs.aantalMedewerkers} {persoonsLabelMv})
-                  </span>
+              ) : (
+                <div className="mt-3 rounded border border-savings/30 bg-savings-light p-4">
+                  <div className="text-xs font-medium uppercase tracking-wide text-savings-dark">
+                    CareUp volumestaffel 2025 — band {formatBandLabel(huidigeBand)}
+                  </div>
+                  <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                    <span className="font-serif text-2xl font-semibold text-savings-dark">
+                      €{vasteBandPrijs.toLocaleString('nl-NL')}
+                    </span>
+                    <span className="text-sm text-savings-dark">
+                      per jaar — vaste licentie ({inputs.aantalMedewerkers} {persoonsLabelMv})
+                    </span>
+                  </div>
+                  <div className="mt-2 text-xs text-savings-dark/80">
+                    Komt neer op €{staffelPrijs.toLocaleString('nl-NL', { maximumFractionDigits: 2 })}/{persoonsLabel}/jaar.
+                    Bij {inputs.aantalMedewerkers + 1} {persoonsLabelMv} val je in de volgende staffel-band.
+                  </div>
                 </div>
-                <div className="mt-2 text-xs text-savings-dark/80">
-                  Komt neer op €{staffelPrijs.toLocaleString('nl-NL', { maximumFractionDigits: 2 })}/{persoonsLabel}/jaar.
-                  Bij {inputs.aantalMedewerkers + 1} {persoonsLabelMv} val je in de volgende staffel-band.
-                </div>
-              </div>
+              )}
 
               {/* Override mogelijkheid voor afwijkende contracten */}
               <div className="mt-3">
                 {!heeftOverride ? (
                   <button
                     type="button"
-                    onClick={() => setI('careUpLicentieOverride', vasteBandPrijs)}
+                    onClick={() => setI('careUpLicentieOverride', effectievePrijs)}
                     className="text-xs font-medium text-careup-700 hover:text-careup-800 hover:underline"
                   >
                     + Eigen contract-tarief invullen (afwijkend van staffel)
@@ -471,11 +505,11 @@ export default function App() {
                       <InputField
                         type="slider"
                         label="Totaal jaarbedrag CareUp-licentie"
-                        value={inputs.careUpLicentieOverride ?? vasteBandPrijs}
+                        value={inputs.careUpLicentieOverride ?? effectievePrijs}
                         onChange={(v) => setI('careUpLicentieOverride', v)}
-                        min={Math.max(100, Math.round(vasteBandPrijs * 0.3))}
-                        max={Math.round(vasteBandPrijs * 2)}
-                        step={50}
+                        min={Math.max(50, Math.round(effectievePrijs * 0.3))}
+                        max={Math.round(Math.max(effectievePrijs, vasteBandPrijs) * 2)}
+                        step={Math.max(10, Math.round(effectievePrijs / 50) * 10)}
                         format="euro"
                         unit="€"
                         tooltip="Vul hier het bedrag in dat in jullie offerte van CareUp staat — bijvoorbeeld bij maatwerkafspraken of meerjarige contracten."

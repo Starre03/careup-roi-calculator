@@ -1,4 +1,4 @@
-import { careUpVasteJaarprijs } from './pricing';
+import { careUpEffectievePrijs } from './pricing';
 
 export interface CalculatorInputs {
   organisatieNaam: string;
@@ -85,12 +85,13 @@ export const calculate = (i: CalculatorInputs): CalculatorResults => {
   const huidigeKosten =
     huidigSkillslab + huidigVerlorenUren + huidigBijscholing + huidigReiskosten;
 
-  // CareUp situatie — vaste prijs uit staffel (de prijs die CareUp factureert).
-  // Als de gebruiker een override heeft ingesteld (bv. negotiated tarief), gebruik die.
+  // CareUp situatie — laagste van instellingstaffel óf individueel jaarabo × N.
+  // Voor < 5 medewerkers is individueel (€129,50/persoon) doorgaans goedkoper
+  // dan de instellingstaffel-band-prijs van €550 voor band 1-10.
   const careUpLicentie =
     i.careUpLicentieOverride && i.careUpLicentieOverride > 0
       ? i.careUpLicentieOverride
-      : careUpVasteJaarprijs(N);
+      : careUpEffectievePrijs(N);
   const restSkillslab = huidigSkillslab * (1 - i.reductieSkillslab);
   const restVerlorenUren = huidigVerlorenUren * (1 - i.reductieVerlorenUren);
   const restBijscholing = huidigBijscholing * (1 - i.reductieBijscholing);
