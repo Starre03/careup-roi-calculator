@@ -1,3 +1,4 @@
+import { AlertTriangle } from 'lucide-react';
 import { Tooltip } from './Tooltip';
 
 interface BaseProps {
@@ -15,6 +16,10 @@ interface SliderProps extends BaseProps {
   step?: number;
   unit?: string;
   format?: 'euro' | 'number' | 'percent';
+  /** Toont een waarschuwing als value buiten deze realistische range valt */
+  realisticMin?: number;
+  realisticMax?: number;
+  warningMessage?: string;
 }
 
 interface NumberInputProps extends BaseProps {
@@ -159,6 +164,26 @@ export const InputField = (props: Props) => {
           {props.format === 'euro' ? ' €' : ''} {props.hint && `· ${props.hint}`}
         </p>
       )}
+      {(() => {
+        const tooLow = props.realisticMin !== undefined && props.value < props.realisticMin;
+        const tooHigh = props.realisticMax !== undefined && props.value > props.realisticMax;
+        if (!tooLow && !tooHigh) return null;
+        const fmt = (n: number) =>
+          props.format === 'euro'
+            ? `€${formatValue(n, props.format)}`
+            : props.format === 'percent'
+              ? `${n}%`
+              : formatValue(n, props.format);
+        const defaultMsg = tooHigh
+          ? `Deze waarde ligt boven het Nederlandse branche-gemiddelde (typisch ${fmt(props.realisticMax!)} of lager).`
+          : `Deze waarde ligt onder het Nederlandse branche-gemiddelde (typisch ${fmt(props.realisticMin!)} of hoger).`;
+        return (
+          <p className="mt-1.5 flex items-start gap-1.5 rounded border border-amber-200 bg-amber-50 px-2 py-1.5 text-xs text-amber-800">
+            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
+            <span>{props.warningMessage ?? defaultMsg}</span>
+          </p>
+        );
+      })()}
     </div>
   );
 };

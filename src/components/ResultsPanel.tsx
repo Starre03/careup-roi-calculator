@@ -1,5 +1,6 @@
 import { TrendingUp, TrendingDown, Users, Award, BadgeCheck, Wallet } from 'lucide-react';
 import { MultiYearProjection } from './MultiYearProjection';
+import { BenchmarkPanel } from './BenchmarkPanel';
 import {
   BarChart,
   Bar,
@@ -10,16 +11,17 @@ import {
   Tooltip as RTooltip,
   CartesianGrid,
 } from 'recharts';
-import type { CalculatorResults } from '../lib/calculations';
+import type { CalculatorInputs, CalculatorResults } from '../lib/calculations';
 import { formatEuro, formatPercent } from '../lib/formatters';
 import { CountUp } from './CountUp';
 
 interface Props {
   r: CalculatorResults;
+  inputs: CalculatorInputs;
   bestuurderModus: boolean;
 }
 
-export const ResultsPanel = ({ r, bestuurderModus }: Props) => {
+export const ResultsPanel = ({ r, inputs, bestuurderModus }: Props) => {
   const positief = r.besparing > 0;
   const accentColor = positief ? '#2d6e3e' : '#a83232';
 
@@ -136,6 +138,8 @@ export const ResultsPanel = ({ r, bestuurderModus }: Props) => {
           </div>
         </div>
       )}
+
+      {!bestuurderModus && <BenchmarkPanel inputs={inputs} r={r} />}
 
       <MultiYearProjection r={r} jaren={5} />
 

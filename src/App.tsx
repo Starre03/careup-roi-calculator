@@ -57,6 +57,9 @@ import { decodeQueryToInputs, writeInputsToUrl } from './lib/urlState';
 import { InputField } from './components/InputField';
 import { ResultsPanel } from './components/ResultsPanel';
 import { ShareButton } from './components/ShareButton';
+import { DemoCTA } from './components/DemoCTA';
+import { BronnenAccordion } from './components/BronnenAccordion';
+import { PrintReport } from './components/PrintReport';
 
 type Mode = 'sales' | 'bestuurder';
 
@@ -131,6 +134,9 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-surface-alt">
+      {/* Print-only rapport — verborgen op scherm, zichtbaar bij print/PDF */}
+      <PrintReport inputs={inputs} r={r} />
+
       {/* Header */}
       <header className="border-b border-surface-line bg-white no-print">
         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
@@ -245,6 +251,7 @@ export default function App() {
                       ? 'Eigen skillslab onderhoud, materialen-abonnement of huur per student per jaar. Voor zorgopleidingen typisch €60-€120/student.'
                       : 'Jaarabonnement of toegang tot fysieke skillslab. Catharina Ziekenhuis €61,50, TMI bijscholing €229,95. Branchegemiddelde NL 2025-2026 ~€125 voor VVT, hoger voor ziekenhuis.'
                   }
+                  realisticMax={isOnderwijs ? 150 : 250}
                   hint=""
                 />
                 {!bestuurderModus && (
@@ -262,6 +269,8 @@ export default function App() {
                   format="number"
                   unit="uur"
                   tooltip="Alleen reistijd + wachttijd + administratie rond fysieke skillslab-sessies. Hoger voor thuiszorg (~3-5u), lager voor organisaties met intern lab (~1-2u). Bijscholingsdagen tellen apart mee."
+                  realisticMax={8}
+                  warningMessage="Meer dan 8 uur reistijd/jaar is hoger dan gangbaar — alleen bijscholingsdagen tellen apart mee."
                 />
                 <InputField
                   type="slider"
@@ -274,6 +283,7 @@ export default function App() {
                   format="euro"
                   unit="€"
                   tooltip="Reiskostenvergoeding voor skillslab- en bijscholingsbezoeken. CAO-norm €0,23/km. Voorbeeld: 4 bezoeken × 65 km retour = €60/jr. VVT/thuiszorg hoger door verspreide locaties; ziekenhuis lager door intern lab."
+                  realisticMax={150}
                 />
                 <InputField
                   type="slider"
@@ -286,6 +296,9 @@ export default function App() {
                   format="euro"
                   unit="€"
                   tooltip="Bruto uurloon CAO VVT 2026 (€18-26 voor verpleegkundige niv. 4) + werkgeverslasten ~55% (sociale premies, vakantiegeld, eindejaarsuitkering, ORT). Ziekenhuis-personeel hoger (€42), ZZP-inhuur €45-60."
+                  realisticMin={25}
+                  realisticMax={50}
+                  warningMessage="Werkgeverskosten buiten €25-€50/uur zijn ongebruikelijk voor zorg — controleer of je inclusief werkgeverslasten rekent."
                 />
                   </>
                 )}
@@ -328,6 +341,12 @@ export default function App() {
                       ? 'Kostprijs per student per uur fysiek skillslab: instructeur (€50/u, ratio ~1:8 = €6/student) + materiaal/verbruik (€8-12/u) + lab-overhead. Default €18 conservatief.'
                       : 'Cursusprijs zelf (excl. salaris). Marktgemiddelde NL: TMI €230 incl. praktijktoets, externe trainer in groepsverband €54-€100, ROC-cursus €200-€300, in-house trainer ~€150.'
                   }
+                  realisticMax={isOnderwijs ? 50 : 300}
+                  warningMessage={
+                    isOnderwijs
+                      ? 'Boven €50/u skillslab-kostprijs is uitzonderlijk hoog voor zorgopleidingen.'
+                      : 'Cursussen boven €300/dag zijn ongebruikelijk — check of je niet per ongeluk meerdere dagen meerekent.'
+                  }
                 />
                 {!isOnderwijs && (
                   <InputField
@@ -341,6 +360,8 @@ export default function App() {
                     format="number"
                     unit="uur"
                     tooltip="Een hele werkdag bijscholing = 8 uur doorbetaald loon (medewerker werkt niet, maar je betaalt wel salaris). Eventueel + vervangingskosten ZZP. Default 8u — dit is vaak vergeten in ROI-berekeningen."
+                    realisticMin={6}
+                    realisticMax={9}
                   />
                 )}
                   </div>
@@ -512,30 +533,38 @@ export default function App() {
 
           {/* Rechter kolom: results */}
           <aside className="lg:col-span-5">
-            <div className="lg:sticky lg:top-6">
-              <ResultsPanel r={r} bestuurderModus={bestuurderModus} />
+            <div className="lg:sticky lg:top-6 space-y-4">
+              <ResultsPanel r={r} inputs={inputs} bestuurderModus={bestuurderModus} />
+
+              {/* Demo CTA — lead conversie */}
+              <DemoCTA besparing={r.besparing} organisatieNaam={inputs.organisatieNaam} />
 
               {/* Actieknoppen */}
-              <div className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-3 no-print">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 no-print">
                 <button
                   onClick={() => exportToExcel(inputs, r)}
-                  className="btn-primary justify-center"
+                  className="btn-secondary justify-center"
                 >
                   <Download className="h-4 w-4" /> Excel
                 </button>
                 <ShareButton inputs={inputs} />
                 <button onClick={() => window.print()} className="btn-secondary justify-center">
-                  <Printer className="h-4 w-4" /> Print / PDF
+                  <Printer className="h-4 w-4" /> PDF
                 </button>
               </div>
             </div>
           </aside>
         </div>
 
+        {/* Bronnen accordeon — onderaan voor wie de cijfers wil naslaan */}
+        <div className="mt-6">
+          <BronnenAccordion />
+        </div>
+
         {/* Disclaimer */}
-        <footer className="mt-12 border-t border-surface-line pt-6 text-xs text-ink-muted">
+        <footer className="mt-12 border-t border-surface-line pt-6 text-xs text-ink-muted no-print">
           <p className="max-w-4xl">
-            <strong className="text-ink">Disclaimer:</strong> Deze calculator geeft een indicatie op basis van Nederlandse branchegemiddelden 2025-2026. De werkelijke besparing varieert per organisatie. Wil je dit valideren? Vraag een <a href="https://careup.online" target="_blank" rel="noreferrer" className="font-medium text-careup-700 hover:underline">gratis 30-dagen demo</a> aan en test CareUp met je eigen team.
+            <strong className="text-ink">Disclaimer:</strong> Deze calculator geeft een indicatie op basis van Nederlandse branchegemiddelden 2025-2026. De werkelijke besparing varieert per organisatie. Wil je dit valideren? Vraag een <a href="https://careup.online/contact" target="_blank" rel="noreferrer" className="font-medium text-careup-700 hover:underline">gratis 30-dagen demo</a> aan en test CareUp met je eigen team.
           </p>
           <p className="mt-3">
             CareUp · Virtual Learning Lab voor zorgprofessionals · Defaults gebaseerd op publieke marktdata (Catharina Ziekenhuis, TMI Academy, CAO VVT 2026).

@@ -92,15 +92,226 @@ input[type='number'] {
   -moz-appearance: textfield;
 }
 
+/* Print-only block — verborgen op scherm, alleen zichtbaar in print/PDF */
+.print-only {
+  display: none;
+}
+
 @media print {
-  .no-print {
+  /* Schakel scherm-UI uit, toon alleen het print-rapport */
+  .no-print,
+  header,
+  main > section,
+  main > .grid,
+  aside,
+  footer.mt-12,
+  body > div > main > footer {
     display: none !important;
   }
+
   body {
+    background: white !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  @page {
+    size: A4;
+    margin: 12mm 14mm;
+  }
+
+  .print-page {
+    font-family: 'Roboto', Arial, sans-serif;
+    color: #1f2937;
+    font-size: 10pt;
+    line-height: 1.4;
+  }
+
+  .print-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    border-bottom: 2px solid #69c8e7;
+    padding-bottom: 8pt;
+    margin-bottom: 12pt;
+  }
+
+  .print-logo {
+    height: 32pt;
+    width: auto;
+  }
+
+  .print-meta {
+    text-align: right;
+    font-size: 9pt;
+    color: #555d66;
+  }
+
+  .print-meta-title {
+    font-family: 'Quicksand', sans-serif;
+    font-size: 12pt;
+    font-weight: 700;
+    color: #1c5366;
+  }
+
+  .print-org {
+    margin-bottom: 14pt;
+  }
+
+  .print-org-name {
+    font-family: 'Quicksand', sans-serif;
+    font-size: 16pt;
+    font-weight: 700;
+    color: #1c5366;
+  }
+
+  .print-org-detail {
+    font-size: 10pt;
+    color: #555d66;
+  }
+
+  .print-hero {
+    background: #f0fafd;
+    border: 1px solid #b5e6f3;
+    padding: 14pt 16pt;
+    border-radius: 4pt;
+    margin-bottom: 14pt;
+  }
+
+  .print-hero-label {
+    font-size: 8pt;
+    letter-spacing: 0.08em;
+    color: #555d66;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+
+  .print-hero-value {
+    font-family: 'Quicksand', sans-serif;
+    font-size: 32pt;
+    font-weight: 700;
+    line-height: 1;
+    margin: 4pt 0;
+  }
+
+  .print-hero-detail {
+    font-size: 10pt;
+    color: #1f2937;
+  }
+
+  .print-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8pt;
+    margin-bottom: 14pt;
+  }
+
+  .print-cell {
+    border: 1px solid #eeeeee;
+    padding: 10pt;
+    border-radius: 3pt;
     background: white;
   }
-  .group-card {
-    box-shadow: none;
-    border: 1px solid #ddd;
+
+  .print-cell.highlight {
+    background: #f0fafd;
+    border-color: #b5e6f3;
+  }
+
+  .print-cell-label {
+    font-size: 8pt;
+    letter-spacing: 0.06em;
+    color: #555d66;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+
+  .print-cell-value {
+    font-family: 'Quicksand', sans-serif;
+    font-size: 16pt;
+    font-weight: 700;
+    color: #1c5366;
+    margin: 3pt 0;
+  }
+
+  .print-cell-sub {
+    font-size: 9pt;
+    color: #7a8189;
+  }
+
+  .print-section h3,
+  .print-compliance h3 {
+    font-family: 'Quicksand', sans-serif;
+    font-size: 11pt;
+    font-weight: 700;
+    color: #1c5366;
+    margin: 0 0 6pt 0;
+  }
+
+  .print-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9.5pt;
+    margin-bottom: 14pt;
+  }
+
+  .print-table th {
+    text-align: left;
+    border-bottom: 1.5pt solid #1c5366;
+    padding: 5pt 6pt;
+    font-weight: 600;
+    color: #1c5366;
+  }
+
+  .print-table td {
+    padding: 4pt 6pt;
+    border-bottom: 0.5pt solid #eeeeee;
+  }
+
+  .print-table td:not(:first-child) {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .print-table .print-total td {
+    border-top: 1pt solid #1c5366;
+    border-bottom: none;
+    font-weight: 700;
+    padding-top: 6pt;
+  }
+
+  .print-compliance {
+    margin-bottom: 14pt;
+    page-break-inside: avoid;
+  }
+
+  .print-compliance ul {
+    margin: 0;
+    padding-left: 14pt;
+  }
+
+  .print-compliance li {
+    margin-bottom: 3pt;
+    font-size: 9.5pt;
+  }
+
+  .print-cta {
+    background: #1c5366;
+    color: white;
+    padding: 10pt 14pt;
+    border-radius: 3pt;
+    text-align: center;
+    font-size: 11pt;
+    margin-bottom: 12pt;
+  }
+
+  .print-footer {
+    border-top: 0.5pt solid #eeeeee;
+    padding-top: 6pt;
+    font-size: 8pt;
+    color: #7a8189;
+    line-height: 1.4;
   }
 }
