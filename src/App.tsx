@@ -469,7 +469,7 @@ export default function App() {
                 {advancedOpen && (
                   <div className="mt-4 space-y-5">
                     <p className="rounded bg-careup-50 p-3 text-xs text-careup-800">
-                      <strong>Wat vervangt CareUp?</strong> CareUp levert V&VN-geaccrediteerde toetsen, tentamens, BIG-herregistratiepunten en certificaten. Daarmee vervalt het overgrote deel van fysieke skillslab-oefeningen en bijscholingsdagen. Alleen voor specifieke risicohandelingen (bv. infuus inbrengen) blijft een periodieke fysieke praktijktoets door een beoordelaar nodig.
+                      <strong>Wat vervangt CareUp?</strong> CareUp levert V&VN-geaccrediteerde toetsen, tentamens, BIG-herregistratiepunten en certificaten. Medewerkers halen alle benodigde accreditatiepunten voor BIG-herregistratie volledig via CareUp — fysieke bijscholing en skillslab-bezoeken zijn daarmee grotendeels overbodig.
                       {isOnderwijs && (
                         <>
                           <br />
@@ -484,11 +484,11 @@ export default function App() {
                       value={Math.round(inputs.reductieVerlorenUren * 100)}
                       onChange={(v) => setI('reductieVerlorenUren', v / 100)}
                       min={0}
-                      max={95}
+                      max={100}
                       step={5}
                       format="percent"
                       unit="%"
-                      tooltip="Door virtueel oefenen + zelfstudie vervalt de meeste reistijd. Medewerker oefent op werkplek of thuis, op eigen tempo. Alleen periodieke praktijktoets vereist nog reistijd."
+                      tooltip="Medewerkers oefenen en toetsen op werkplek of thuis via CareUp — reistijd naar skillslab of bijscholingslocatie vervalt volledig."
                     />
                     <InputField
                       type="slider"
@@ -496,11 +496,11 @@ export default function App() {
                       value={Math.round(inputs.reductieSkillslab * 100)}
                       onChange={(v) => setI('reductieSkillslab', v / 100)}
                       min={0}
-                      max={95}
+                      max={100}
                       step={5}
                       format="percent"
                       unit="%"
-                      tooltip="Oefenmomenten gaan virtueel; V&VN-geaccrediteerde toetsen worden via CareUp afgenomen. Alleen voor specifieke handelingen blijft een fysieke praktijkbeoordeling vereist (bv. 1× per 3 jaar). Reductie 60-80% realistisch voor zorg, lager voor onderwijs."
+                      tooltip="CareUp neemt V&VN-geaccrediteerde toetsen en tentamens af — alle benodigde accreditatiepunten worden bijgeschreven in het V&VN Kwaliteitsregister. Fysieke skillslab-abonnementen zijn daarmee niet meer nodig."
                     />
                     <InputField
                       type="slider"
@@ -508,11 +508,11 @@ export default function App() {
                       value={Math.round(inputs.reductieBijscholing * 100)}
                       onChange={(v) => setI('reductieBijscholing', v / 100)}
                       min={0}
-                      max={95}
+                      max={100}
                       step={5}
                       format="percent"
                       unit="%"
-                      tooltip="CareUp dekt theorie + toetsen + accreditatiepunten via V&VN — meeste fysieke bijscholingsdagen kunnen vervallen of zelfstudie worden. Reductie geldt op zowel cursusprijs als doorbetaalde werkdag."
+                      tooltip="CareUp dekt theorie, toetsen en BIG-herregistratiepunten volledig via V&VN-accreditatie. Externe bijscholingsdagen — inclusief de doorbetaalde verloren werkdag — vervallen grotendeels."
                     />
                     <InputField
                       type="slider"
@@ -520,11 +520,11 @@ export default function App() {
                       value={Math.round(inputs.reductieReiskosten * 100)}
                       onChange={(v) => setI('reductieReiskosten', v / 100)}
                       min={0}
-                      max={95}
+                      max={100}
                       step={5}
                       format="percent"
                       unit="%"
-                      tooltip="Minder fysieke skillslab/cursus-bezoeken = lagere reiskostenvergoeding. Alleen voor jaarlijkse praktijktoetsen blijven enkele reizen nodig."
+                      tooltip="Omdat medewerkers niet meer naar skillslab of externe bijscholing reizen, vervalt de reiskostenvergoeding nagenoeg volledig."
                     />
                   </div>
                 )}

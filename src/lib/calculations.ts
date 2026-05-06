@@ -157,13 +157,13 @@ export const DEFAULTS: CalculatorInputs = {
   careUpLicentieOverride: 0, // 0 = geen override, gebruik vaste staffel-prijs
 
   // Reducties — wat vervangt CareUp daadwerkelijk?
-  // CareUp levert V&VN-geaccrediteerde toetsen + tentamens + BIG-punten,
-  // dus het meeste theoretisch deel + oefenen kan virtueel.
-  // Alleen periodieke fysieke praktijktoets door beoordelaar blijft.
-  reductieVerlorenUren: 0.8,
-  reductieSkillslab: 0.7,
-  reductieBijscholing: 0.75,
-  reductieReiskosten: 0.8,
+  // CareUp levert V&VN-geaccrediteerde toetsen + tentamens + alle BIG-herregistratiepunten.
+  // Alle accreditatiepunten worden volledig via CareUp behaald — fysieke skillslab-abonnementen
+  // en externe bijscholingsdagen zijn daarmee grotendeels niet meer nodig.
+  reductieVerlorenUren: 0.90,
+  reductieSkillslab: 0.85,
+  reductieBijscholing: 0.85,
+  reductieReiskosten: 0.90,
 };
 
 export const TYPE_ORGANISATIES = [

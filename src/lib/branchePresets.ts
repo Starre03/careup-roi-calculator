@@ -25,13 +25,10 @@ export type BranchePreset = Pick<
 /**
  * REDUCTIES — wat vervangt CareUp daadwerkelijk?
  *
- * CareUp levert V&VN-geaccrediteerde toetsen + tentamens, BIG-herregistratie-punten,
- * en certificaten. Voor zorgsectoren betekent dit dat het overgrote deel van
- * fysieke bijscholing en oefenmomenten vervangen kan worden door virtuele simulatie.
- *
- * Wat blijft fysiek nodig:
- *  - Periodieke praktijktoets door beoordelaar voor echte risicohandelingen (bv. infuus)
- *  - In sommige organisaties: jaarlijks moment hands-on demo
+ * CareUp levert V&VN-geaccrediteerde toetsen + tentamens, BIG-herregistratiepunten
+ * en certificaten. Alle accreditatiepunten voor BIG-herregistratie worden volledig
+ * via CareUp behaald — een aparte fysieke praktijktoets is daarmee NIET meer nodig.
+ * Fysieke skillslab-abonnementen en externe bijscholingsdagen vervallen grotendeels.
  *
  * Voor onderwijs ligt het anders: studenten moeten skills voor het EERST leren.
  * Daar is fysieke oefening cruciaal — CareUp is aanvulling, niet vervanging.
@@ -46,11 +43,11 @@ export const BRANCHE_PRESETS: Record<string, BranchePreset> = {
     kostenPerBijscholingsdag: 195,
     urenPerBijscholingsdag: 8,
     reiskostenPerMedewerker: 60,
-    // CareUp levert accreditatie → meeste skillslab + bijscholing kan vervallen
-    reductieSkillslab: 0.7,
-    reductieVerlorenUren: 0.8,
-    reductieBijscholing: 0.75,
-    reductieReiskosten: 0.8,
+    // CareUp dekt alle BIG-punten + V&VN-accreditatie → skillslab + bijscholing vervallen grotendeels
+    reductieSkillslab: 0.85,
+    reductieVerlorenUren: 0.90,
+    reductieBijscholing: 0.85,
+    reductieReiskosten: 0.90,
   },
   Ziekenhuis: {
     skillslabPerMedewerker: 165,
@@ -60,11 +57,11 @@ export const BRANCHE_PRESETS: Record<string, BranchePreset> = {
     kostenPerBijscholingsdag: 240,
     urenPerBijscholingsdag: 8,
     reiskostenPerMedewerker: 25,
-    // Iets lager — meer complexe handelingen die fysieke beoordeling vereisen (OK, IC)
-    reductieSkillslab: 0.6,
-    reductieVerlorenUren: 0.7,
-    reductieBijscholing: 0.65,
-    reductieReiskosten: 0.7,
+    // Iets lager — specialistische afdelingen (OK, IC) houden eigen praktijk-componenten
+    reductieSkillslab: 0.80,
+    reductieVerlorenUren: 0.85,
+    reductieBijscholing: 0.80,
+    reductieReiskosten: 0.85,
   },
   GGZ: {
     skillslabPerMedewerker: 95,
@@ -74,10 +71,10 @@ export const BRANCHE_PRESETS: Record<string, BranchePreset> = {
     kostenPerBijscholingsdag: 185,
     urenPerBijscholingsdag: 8,
     reiskostenPerMedewerker: 40,
-    reductieSkillslab: 0.7,
-    reductieVerlorenUren: 0.75,
-    reductieBijscholing: 0.75,
-    reductieReiskosten: 0.75,
+    reductieSkillslab: 0.85,
+    reductieVerlorenUren: 0.90,
+    reductieBijscholing: 0.85,
+    reductieReiskosten: 0.90,
   },
   Gehandicaptenzorg: {
     skillslabPerMedewerker: 115,
@@ -87,10 +84,10 @@ export const BRANCHE_PRESETS: Record<string, BranchePreset> = {
     kostenPerBijscholingsdag: 190,
     urenPerBijscholingsdag: 8,
     reiskostenPerMedewerker: 55,
-    reductieSkillslab: 0.7,
-    reductieVerlorenUren: 0.8,
-    reductieBijscholing: 0.75,
-    reductieReiskosten: 0.8,
+    reductieSkillslab: 0.85,
+    reductieVerlorenUren: 0.90,
+    reductieBijscholing: 0.85,
+    reductieReiskosten: 0.90,
   },
   Onderwijsinstelling: {
     // ANDERE KOSTENSTRUCTUUR — geen werkgeverskosten, wel praktijkuren in fysiek lab.
@@ -118,10 +115,10 @@ export const BRANCHE_PRESETS: Record<string, BranchePreset> = {
     kostenPerBijscholingsdag: 195,
     urenPerBijscholingsdag: 8,
     reiskostenPerMedewerker: 60,
-    reductieSkillslab: 0.7,
-    reductieVerlorenUren: 0.8,
-    reductieBijscholing: 0.75,
-    reductieReiskosten: 0.8,
+    reductieSkillslab: 0.85,
+    reductieVerlorenUren: 0.90,
+    reductieBijscholing: 0.85,
+    reductieReiskosten: 0.90,
   },
 };
 

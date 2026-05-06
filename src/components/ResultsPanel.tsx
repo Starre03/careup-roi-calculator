@@ -175,7 +175,7 @@ export const ResultsPanel = ({ r, inputs, bestuurderModus }: Props) => {
           <li className="flex gap-2">
             <Award className="mt-0.5 h-4 w-4 flex-shrink-0 text-careup-500" />
             <span>
-              <strong className="text-ink">BIG-herregistratie</strong> (verplicht elke 5 jaar) — CareUp levert direct accreditatiepunten via V&VN-geaccrediteerde toetsen en tentamens. Je medewerkers hebben actueel inzicht in punten, certificaten en herregistratie-deadlines.
+              <strong className="text-ink">BIG-herregistratie volledig geregeld</strong> — alle benodigde accreditatiepunten worden via CareUp behaald. Een aparte fysieke toets of bijscholingsdag is daarmee niet meer nodig. Medewerkers zien realtime hun punten, certificaten en herregistratie-deadlines.
             </span>
           </li>
           <li className="flex gap-2">

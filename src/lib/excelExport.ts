@@ -142,7 +142,7 @@ export const exportToExcel = (inputs: CalculatorInputs, r: CalculatorResults): v
     ],
     [
       'Reducties — onderbouwing',
-      'CareUp levert V&VN-geaccrediteerde toetsen, tentamens en BIG-punten. Daarmee vervangt het ~70% van skillslab-bezoeken en ~75% van bijscholingsdagen voor zorgsectoren. Periodieke fysieke praktijktoets door beoordelaar blijft vereist voor specifieke risicohandelingen. Voor onderwijs ligt vervanging lager (~15-35%) want studenten moeten skills voor het eerst fysiek leren.',
+      'CareUp levert V&VN-geaccrediteerde toetsen, tentamens en alle BIG-herregistratiepunten. Alle benodigde accreditatiepunten worden volledig via CareUp behaald — een aparte fysieke praktijktoets is daarmee niet meer nodig. Voor zorgsectoren vervangt CareUp ~85% van skillslab-bezoeken en ~85% van bijscholingsdagen. Voor onderwijs ligt vervanging lager (~15-35%) want studenten moeten skills voor het eerst fysiek leren.',
     ],
     [
       'Disclaimer',
