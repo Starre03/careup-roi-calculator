@@ -1,3 +1,5 @@
+import { careUpVasteJaarprijs } from './pricing';
+
 export interface CalculatorInputs {
   organisatieNaam: string;
   typeOrganisatie: string;
@@ -18,8 +20,10 @@ export interface CalculatorInputs {
   // Loonkosten
   uurtarief: number; // werkgeverskosten per uur (bruto + lasten)
 
-  // CareUp investering
-  careUpPrijsPerGebruiker: number; // per gebruiker per jaar
+  // CareUp investering — afgeleid uit staffel; alleen gebruikt als override > 0 is opgegeven
+  careUpPrijsPerGebruiker: number;
+  /** Optionele override van staffel — laat op 0 staan voor automatisch staffel-tarief */
+  careUpLicentieOverride?: number;
 
   // Reducties — fractie van de huidige kosten die vervalt bij overstap
   reductieVerlorenUren: number; // 0..1
@@ -81,8 +85,12 @@ export const calculate = (i: CalculatorInputs): CalculatorResults => {
   const huidigeKosten =
     huidigSkillslab + huidigVerlorenUren + huidigBijscholing + huidigReiskosten;
 
-  // CareUp situatie
-  const careUpLicentie = N * i.careUpPrijsPerGebruiker;
+  // CareUp situatie — vaste prijs uit staffel (de prijs die CareUp factureert).
+  // Als de gebruiker een override heeft ingesteld (bv. negotiated tarief), gebruik die.
+  const careUpLicentie =
+    i.careUpLicentieOverride && i.careUpLicentieOverride > 0
+      ? i.careUpLicentieOverride
+      : careUpVasteJaarprijs(N);
   const restSkillslab = huidigSkillslab * (1 - i.reductieSkillslab);
   const restVerlorenUren = huidigVerlorenUren * (1 - i.reductieVerlorenUren);
   const restBijscholing = huidigBijscholing * (1 - i.reductieBijscholing);
@@ -145,7 +153,8 @@ export const DEFAULTS: CalculatorInputs = {
 
   uurtarief: 32, // CAO VVT verpleegkundige niv. 4 + 55% wgv-lasten
 
-  careUpPrijsPerGebruiker: 24.5, // staffel band 101-250 = €6.125 vast / 250 = €24,50
+  careUpPrijsPerGebruiker: 24.5, // staffel band 101-250 = €6.125 vast / 250 = €24,50 (informatief)
+  careUpLicentieOverride: 0, // 0 = geen override, gebruik vaste staffel-prijs
 
   // Reducties — wat vervangt CareUp daadwerkelijk?
   // CareUp levert V&VN-geaccrediteerde toetsen + tentamens + BIG-punten,

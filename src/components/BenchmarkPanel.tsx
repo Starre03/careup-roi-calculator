@@ -2,7 +2,6 @@ import { TrendingUp, Minus, ArrowDown, ArrowUp } from 'lucide-react';
 import type { CalculatorInputs, CalculatorResults } from '../lib/calculations';
 import { calculate } from '../lib/calculations';
 import { BRANCHE_PRESETS } from '../lib/branchePresets';
-import { careUpVolumeStaffel } from '../lib/pricing';
 import { formatEuro } from '../lib/formatters';
 
 interface Props {
@@ -17,11 +16,12 @@ interface Props {
 export const BenchmarkPanel = ({ inputs, r }: Props) => {
   const preset = BRANCHE_PRESETS[inputs.typeOrganisatie] ?? BRANCHE_PRESETS.Anders;
 
-  // Branche-default scenario: zelfde aantal medewerkers, alle defaults uit preset
+  // Branche-default scenario: zelfde aantal medewerkers, alle defaults uit preset.
+  // Licentie volgt automatisch de staffel (override uitgeschakeld).
   const benchmarkInputs: CalculatorInputs = {
     ...inputs,
     ...preset,
-    careUpPrijsPerGebruiker: careUpVolumeStaffel(inputs.aantalMedewerkers),
+    careUpLicentieOverride: 0,
   };
   const benchmark = calculate(benchmarkInputs);
 

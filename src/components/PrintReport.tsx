@@ -160,7 +160,7 @@ export const PrintReport = ({ inputs, r }: Props) => {
         </div>
 
         <div className="print-cta">
-          <strong>Plan een gratis 30-dagen demo:</strong> careup.online/contact
+          <strong>Plan een gratis 30-dagen demo:</strong> careup.online/organisatie-demo/
         </div>
 
         {/* Footer */}

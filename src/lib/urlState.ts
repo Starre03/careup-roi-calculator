@@ -10,6 +10,7 @@ const KEY_MAP: Array<[keyof CalculatorInputs, string]> = [
   ['bijscholingsdagen', 'bd'],
   ['kostenPerBijscholingsdag', 'kpd'],
   ['careUpPrijsPerGebruiker', 'cup'],
+  ['careUpLicentieOverride', 'col'],
   ['reductieVerlorenUren', 'ru'],
   ['reductieSkillslab', 'rs'],
   ['reductieBijscholing', 'rb'],

@@ -98,7 +98,7 @@ export const BronnenAccordion = () => {
           <p className="text-xs text-ink-muted">
             Werkelijke besparing varieert per organisatie. Validatie aanbevolen via een{' '}
             <a
-              href="https://careup.online/contact"
+              href="https://careup.online/organisatie-demo/"
               target="_blank"
               rel="noreferrer"
               className="font-medium text-careup-700 hover:underline"

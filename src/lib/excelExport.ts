@@ -54,7 +54,12 @@ export const exportToExcel = (inputs: CalculatorInputs, r: CalculatorResults): v
     ['Bijscholingsdagen per medewerker per jaar', inputs.bijscholingsdagen],
     ['Kosten per externe bijscholingsdag', inputs.kostenPerBijscholingsdag],
     ['Werkdaguren doorbetaald per bijscholingsdag', inputs.urenPerBijscholingsdag],
-    ['CareUp prijs per gebruiker per jaar', inputs.careUpPrijsPerGebruiker],
+    [
+      'CareUp licentie (vaste staffel-prijs)',
+      inputs.careUpLicentieOverride && inputs.careUpLicentieOverride > 0
+        ? `${round(inputs.careUpLicentieOverride)} (eigen contract-tarief)`
+        : `${round(r.careUpLicentie)} (CareUp volumestaffel 2025)`,
+    ],
     ['Reductie reistijd', `${round(inputs.reductieVerlorenUren * 100)}%`],
     ['Reductie skillslab-bezoeken', `${round(inputs.reductieSkillslab * 100)}%`],
     ['Reductie bijscholingsdagen', `${round(inputs.reductieBijscholing * 100)}%`],
@@ -69,7 +74,7 @@ export const exportToExcel = (inputs: CalculatorInputs, r: CalculatorResults): v
     ['Som huidige kosten', round(r.huidigeKosten)],
     [],
     ['KOSTEN MET CAREUP (uitsplitsing)'],
-    ['CareUp licentie = N × prijs', round(r.careUpLicentie)],
+    ['CareUp licentie = vaste staffel-prijs', round(r.careUpLicentie)],
     ['Resterend skillslab = huidig × (1-reductie)', round(r.restSkillslab)],
     ['Resterende reistijd', round(r.restVerlorenUren)],
     ['Resterende reiskosten', round(r.restReiskosten)],

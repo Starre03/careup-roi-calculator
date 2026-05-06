@@ -11,7 +11,7 @@ interface Props {
  */
 export const DemoCTA = ({ besparing, organisatieNaam }: Props) => {
   // careup.online heeft een algemeen contactformulier waar de demo aangevraagd kan worden
-  const url = 'https://careup.online/contact';
+  const url = 'https://careup.online/organisatie-demo/';
   const positief = besparing > 0;
 
   return (
