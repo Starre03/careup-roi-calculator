@@ -1,10 +1,12 @@
 import { AlertTriangle } from 'lucide-react';
 import { Tooltip } from './Tooltip';
+import type { Locale, SelectOption } from '../lib/i18n';
 
 interface BaseProps {
   label: string;
   tooltip?: string;
   hint?: string;
+  locale?: Locale;
 }
 
 interface SliderProps extends BaseProps {
@@ -43,23 +45,29 @@ interface SelectProps extends BaseProps {
   type: 'select';
   value: string;
   onChange: (v: string) => void;
-  options: string[];
+  options: Array<string | SelectOption>;
 }
 
 type Props = SliderProps | NumberInputProps | TextProps | SelectProps;
 
-const formatValue = (v: number, format: SliderProps['format']) => {
+const formatValue = (v: number, format: SliderProps['format'], locale: Locale) => {
   if (format === 'euro')
-    return new Intl.NumberFormat('nl-NL', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(v);
+    return new Intl.NumberFormat(locale === 'nl' ? 'nl-NL' : 'en-US', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(v);
   if (format === 'percent') return `${v}`;
-  return new Intl.NumberFormat('nl-NL').format(v);
+  return new Intl.NumberFormat(locale === 'nl' ? 'nl-NL' : 'en-US').format(v);
 };
 
 export const InputField = (props: Props) => {
+  const locale = props.locale ?? 'nl';
+  const typicalRangeLabel = locale === 'nl' ? 'Typische range' : 'Typical range';
+  const tooltipAriaLabel = locale === 'nl' ? 'Meer info' : 'More info';
   const labelEl = (
     <label className="label-base mb-1 flex items-center">
       <span>{props.label}</span>
-      {props.tooltip && <Tooltip text={props.tooltip} />}
+      {props.tooltip && <Tooltip text={props.tooltip} ariaLabel={tooltipAriaLabel} />}
     </label>
   );
 
@@ -88,11 +96,14 @@ export const InputField = (props: Props) => {
           onChange={(e) => props.onChange(e.target.value)}
           className="input-base cursor-pointer"
         >
-          {props.options.map((o) => (
-            <option key={o} value={o}>
-              {o}
+          {props.options.map((o) => {
+            const option = typeof o === 'string' ? { value: o, label: o } : o;
+            return (
+            <option key={option.value} value={option.value}>
+              {option.label}
             </option>
-          ))}
+            );
+          })}
         </select>
         {props.hint && <p className="hint-base mt-1">{props.hint}</p>}
       </div>
@@ -160,7 +171,7 @@ export const InputField = (props: Props) => {
       </div>
       {props.hint && (
         <p className="hint-base mt-1">
-          Typische range: {formatValue(props.min, props.format)}–{formatValue(props.max, props.format)}
+          {typicalRangeLabel}: {formatValue(props.min, props.format, locale)}–{formatValue(props.max, props.format, locale)}
           {props.format === 'euro' ? ' €' : ''} {props.hint && `· ${props.hint}`}
         </p>
       )}
@@ -170,10 +181,10 @@ export const InputField = (props: Props) => {
         if (!tooLow && !tooHigh) return null;
         const fmt = (n: number) =>
           props.format === 'euro'
-            ? `€${formatValue(n, props.format)}`
+            ? `€${formatValue(n, props.format, locale)}`
             : props.format === 'percent'
               ? `${n}%`
-              : formatValue(n, props.format);
+              : formatValue(n, props.format, locale);
         const defaultMsg = tooHigh
           ? `Deze waarde ligt boven het Nederlandse branche-gemiddelde (typisch ${fmt(props.realisticMax!)} of lager).`
           : `Deze waarde ligt onder het Nederlandse branche-gemiddelde (typisch ${fmt(props.realisticMin!)} of hoger).`;

@@ -3,9 +3,10 @@ import { Info } from 'lucide-react';
 
 interface TooltipProps {
   text: string;
+  ariaLabel?: string;
 }
 
-export const Tooltip = ({ text }: TooltipProps) => {
+export const Tooltip = ({ text, ariaLabel = 'Meer info' }: TooltipProps) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLSpanElement>(null);
 
@@ -21,7 +22,7 @@ export const Tooltip = ({ text }: TooltipProps) => {
     <span ref={ref} className="relative inline-block">
       <button
         type="button"
-        aria-label="Meer info"
+        aria-label={ariaLabel}
         onMouseEnter={() => setOpen(true)}
         onMouseLeave={() => setOpen(false)}
         onFocus={() => setOpen(true)}

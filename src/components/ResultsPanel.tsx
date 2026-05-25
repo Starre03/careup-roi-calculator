@@ -14,21 +14,23 @@ import {
 } from 'recharts';
 import type { CalculatorInputs, CalculatorResults } from '../lib/calculations';
 import { formatEuro, formatPercent } from '../lib/formatters';
+import type { ResultsCopy } from '../lib/i18n';
 import { CountUp } from './CountUp';
 
 interface Props {
   r: CalculatorResults;
   inputs: CalculatorInputs;
   bestuurderModus: boolean;
+  copy: ResultsCopy;
 }
 
-export const ResultsPanel = ({ r, inputs, bestuurderModus }: Props) => {
+export const ResultsPanel = ({ r, inputs, bestuurderModus, copy }: Props) => {
   const positief = r.besparing > 0;
   const accentColor = positief ? '#2d6e3e' : '#a83232';
 
   const chartData = [
-    { naam: 'Huidige situatie', kosten: r.huidigeKosten },
-    { naam: 'Met CareUp', kosten: r.metCareUpKosten },
+    { naam: copy.currentSituation, kosten: r.huidigeKosten },
+    { naam: copy.withCareUp, kosten: r.metCareUpKosten },
   ];
 
   return (
@@ -37,7 +39,7 @@ export const ResultsPanel = ({ r, inputs, bestuurderModus }: Props) => {
       <div className="group-card">
         <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-ink-muted">
           {positief ? <TrendingUp className="h-4 w-4 text-savings" /> : <TrendingDown className="h-4 w-4 text-loss" />}
-          <span>{positief ? 'Jaarlijkse besparing' : 'Jaarlijks tekort'}</span>
+          <span>{positief ? copy.annualSavings : copy.annualDeficit}</span>
         </div>
         <div className="mt-2" style={{ color: accentColor }}>
           <CountUp
@@ -48,18 +50,18 @@ export const ResultsPanel = ({ r, inputs, bestuurderModus }: Props) => {
         </div>
         <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm">
           <div>
-            <span className="text-ink-muted">ROI op licentie: </span>
+            <span className="text-ink-muted">{copy.roiOnLicense}: </span>
             <span className="font-semibold" style={{ color: accentColor }}>
               <CountUp value={r.roi} format={(n) => formatPercent(n, 0)} />
             </span>
           </div>
           {r.terugverdientijdMaanden !== null && (
             <div>
-              <span className="text-ink-muted">Terugverdientijd: </span>
+              <span className="text-ink-muted">{copy.payback}: </span>
               <span className="font-semibold text-ink">
                 <CountUp
                   value={r.terugverdientijdMaanden}
-                  format={(n) => `${n.toFixed(1)} maanden`}
+                  format={(n) => `${n.toFixed(1)} ${copy.months}`}
                 />
               </span>
             </div>
@@ -69,16 +71,16 @@ export const ResultsPanel = ({ r, inputs, bestuurderModus }: Props) => {
 
       {/* Kosten-vergelijking + chart */}
       <div className="group-card">
-        <h3 className="text-base font-semibold text-careup-900">Kosten per jaar</h3>
+        <h3 className="text-base font-semibold text-careup-900">{copy.costsPerYear}</h3>
         <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
           <div className="rounded bg-surface-panel px-3 py-2">
-            <div className="text-xs text-ink-muted">Huidige situatie</div>
+            <div className="text-xs text-ink-muted">{copy.currentSituation}</div>
             <div className="mt-1 font-serif text-lg font-semibold text-ink">
               <CountUp value={r.huidigeKosten} format={(n) => formatEuro(n)} />
             </div>
           </div>
           <div className="rounded bg-careup-50 px-3 py-2">
-            <div className="text-xs text-careup-700">Met CareUp</div>
+            <div className="text-xs text-careup-700">{copy.withCareUp}</div>
             <div className="mt-1 font-serif text-lg font-semibold text-careup-800">
               <CountUp value={r.metCareUpKosten} format={(n) => formatEuro(n)} />
             </div>
@@ -121,17 +123,17 @@ export const ResultsPanel = ({ r, inputs, bestuurderModus }: Props) => {
       {!bestuurderModus && (
         <div className="group-card">
           <h3 className="text-base font-semibold text-careup-900 flex items-center gap-2">
-            <Users className="h-4 w-4" /> Per medewerker per jaar
+            <Users className="h-4 w-4" /> {copy.perEmployeePerYear}
           </h3>
           <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
             <div>
-              <div className="text-xs text-ink-muted">Nu</div>
+              <div className="text-xs text-ink-muted">{copy.now}</div>
               <div className="mt-1 font-serif text-lg font-semibold text-ink">
                 <CountUp value={r.huidigPerMedewerker} format={(n) => formatEuro(n, 0)} />
               </div>
             </div>
             <div>
-              <div className="text-xs text-ink-muted">Met CareUp</div>
+              <div className="text-xs text-ink-muted">{copy.withCareUp}</div>
               <div className="mt-1 font-serif text-lg font-semibold text-careup-700">
                 <CountUp value={r.metCareUpPerMedewerker} format={(n) => formatEuro(n, 0)} />
               </div>
@@ -149,16 +151,16 @@ export const ResultsPanel = ({ r, inputs, bestuurderModus }: Props) => {
       {!bestuurderModus && (
         <div className="group-card">
           <h3 className="text-base font-semibold text-careup-900 flex items-center gap-2">
-            <Wallet className="h-4 w-4" /> Past binnen scholingsbudget
+            <Wallet className="h-4 w-4" /> {copy.fitsTrainingBudget}
           </h3>
           <div className="mt-2">
             <span className="font-serif text-2xl font-semibold text-careup-700">
               <CountUp value={r.pctScholingsbudget} format={(n) => formatPercent(n, 1)} />
             </span>
-            <span className="ml-2 text-sm text-ink-muted">van wettelijk 2% loonsom-budget</span>
+            <span className="ml-2 text-sm text-ink-muted">{copy.ofLegalBudget}</span>
           </div>
           <p className="mt-1 text-xs text-ink-muted">
-            Wettelijk budget: {formatEuro(r.scholingsbudgetTotaal)} per jaar (CAO VVT art. 5.3)
+            {copy.legalBudget}: {formatEuro(r.scholingsbudgetTotaal)} {copy.perYear} ({copy.caoReference})
           </p>
         </div>
       )}
@@ -166,25 +168,25 @@ export const ResultsPanel = ({ r, inputs, bestuurderModus }: Props) => {
       {/* Compliance-blok — altijd zichtbaar */}
       <div className="group-card">
         <h3 className="text-base font-semibold text-careup-900 flex items-center gap-2">
-          <BadgeCheck className="h-4 w-4" /> Wat je krijgt naast de besparing
+          <BadgeCheck className="h-4 w-4" /> {copy.benefitsTitle}
         </h3>
         <ul className="mt-3 space-y-3 text-sm text-ink-soft">
           <li className="flex gap-2">
             <Award className="mt-0.5 h-4 w-4 flex-shrink-0 text-careup-500" />
             <span>
-              <strong className="text-ink">IGJ-bewijslast:</strong> bij toezicht lever je direct aantoonbaar bekwaamheidsbewijs — toetsresultaten en accreditatiepunten worden automatisch bijgeschreven in het V&VN Kwaliteitsregister.
+              <strong className="text-ink">{copy.igjTitle}</strong> {copy.igjText}
             </span>
           </li>
           <li className="flex gap-2">
             <Award className="mt-0.5 h-4 w-4 flex-shrink-0 text-careup-500" />
             <span>
-              <strong className="text-ink">BIG-herregistratie volledig geregeld</strong> — alle benodigde accreditatiepunten worden via CareUp behaald. Een aparte fysieke toets of bijscholingsdag is daarmee niet meer nodig. Medewerkers zien realtime hun punten, certificaten en herregistratie-deadlines.
+              <strong className="text-ink">{copy.bigTitle}</strong> {copy.bigText}
             </span>
           </li>
           <li className="flex gap-2">
             <Award className="mt-0.5 h-4 w-4 flex-shrink-0 text-careup-500" />
             <span>
-              <strong className="text-ink">Wkkgz-naleving:</strong> de wet eist dat je kunt aantonen dat medewerkers bekwaam zijn voor risicovolle handelingen. CareUp levert hiervoor volledig bewijs incl. V&VN-geaccrediteerde toetsen, tentamens en bekwaamheidsverklaringen.
+              <strong className="text-ink">{copy.wkkgzTitle}</strong> {copy.wkkgzText}
             </span>
           </li>
         </ul>

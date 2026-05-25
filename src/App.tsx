@@ -48,9 +48,17 @@
  */
 
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { Download, Printer, Briefcase, Users2, RotateCcw } from 'lucide-react';
-import { calculate, DEFAULTS, TYPE_ORGANISATIES, type CalculatorInputs } from './lib/calculations';
+import { Download, Printer, Briefcase, Users2, RotateCcw, Languages } from 'lucide-react';
+import { calculate, DEFAULTS, type CalculatorInputs } from './lib/calculations';
 import { exportToExcel } from './lib/excelExport';
+import {
+  organizationTypeOptions,
+  translations,
+  type AppCopy,
+  type CalculationCopy,
+  type LanguageCopy,
+  type Locale,
+} from './lib/i18n';
 import { BRANCHE_PRESETS, BRANCHE_OMSCHRIJVING } from './lib/branchePresets';
 import {
   careUpVolumeStaffel,
@@ -88,16 +96,18 @@ const buildInitialInputs = (): CalculatorInputs => {
 export default function App() {
   const [inputs, setInputs] = useState<CalculatorInputs>(buildInitialInputs);
   const [mode, setMode] = useState<Mode>('sales');
+  const [locale, setLocale] = useState<Locale>('nl');
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [showCalc, setShowCalc] = useState(false);
   const [branchePresetApplied, setBranchePresetApplied] = useState(false);
   const branchePresetTimer = useRef<number | null>(null);
 
   const r = useMemo(() => calculate(inputs), [inputs]);
+  const t = translations[locale];
   const bestuurderModus = mode === 'bestuurder';
   const isOnderwijs = inputs.typeOrganisatie === 'Onderwijsinstelling';
-  const persoonsLabel = isOnderwijs ? 'student' : 'medewerker';
-  const persoonsLabelMv = isOnderwijs ? 'studenten' : 'medewerkers';
+  const persoonsLabel = isOnderwijs ? 'student' : locale === 'nl' ? 'medewerker' : 'employee';
+  const persoonsLabelMv = isOnderwijs ? (locale === 'nl' ? 'studenten' : 'students') : locale === 'nl' ? 'medewerkers' : 'employees';
 
   // Sync inputs naar URL (replaceState — geen history-vervuiling)
   useEffect(() => {
@@ -159,7 +169,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-surface-alt">
+    <div className="min-h-screen bg-surface-alt" lang={locale}>
       {/* Print-only rapport — verborgen op scherm, zichtbaar bij print/PDF */}
       <PrintReport inputs={inputs} r={r} />
 
@@ -179,20 +189,21 @@ export default function App() {
                 <div className="text-sm font-semibold text-careup-900 leading-tight">
                   ROI-calculator
                 </div>
-                <div className="text-xs text-ink-muted">voor zorgorganisaties</div>
+                <div className="text-xs text-ink-muted">{t.app.subtitle}</div>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={handleReset}
-                title="Alle waarden terug naar VVT-defaults"
+                title={locale === 'nl' ? 'Alle waarden terug naar VVT-defaults' : 'Reset all values to VVT defaults'}
                 className="inline-flex items-center gap-1 rounded border border-surface-line bg-white px-3 py-1.5 text-xs font-medium text-ink-soft transition-colors hover:border-careup-400 hover:text-careup-700"
               >
                 <RotateCcw className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Reset</span>
               </button>
-              <ModeToggle mode={mode} onChange={setMode} />
+              <ModeToggle mode={mode} onChange={setMode} copy={t.app} />
+              <LanguageToggle locale={locale} onChange={setLocale} copy={t.language} />
             </div>
           </div>
         </div>
@@ -202,10 +213,10 @@ export default function App() {
       <section className="border-b border-surface-line bg-white no-print">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
           <h1 className="heading-display text-3xl sm:text-4xl">
-            Wat bespaar je met CareUp?
+            {t.app.heroTitle}
           </h1>
           <p className="mt-2 max-w-3xl text-ink-soft">
-            Reken voor je eigen organisatie uit wat je bespaart op skillslab-kosten, verloren werkuren en externe bijscholing — door over te stappen op het Virtual Learning Lab voor voorbehouden handelingen.
+            {t.app.heroText}
           </p>
         </div>
       </section>
@@ -220,28 +231,30 @@ export default function App() {
 
             {/* Organisatie */}
             <section className="group-card">
-              <h2 className="font-heading text-lg font-semibold text-careup-900">Jouw organisatie</h2>
+              <h2 className="font-heading text-lg font-semibold text-careup-900">{t.app.organization}</h2>
               <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <InputField
                   type="text"
-                  label="Naam organisatie"
+                  label={t.app.organizationName}
                   value={inputs.organisatieNaam}
                   onChange={(v) => setI('organisatieNaam', v)}
-                  placeholder="bv. Zorggroep Almere"
-                  hint="Verschijnt op het Excel-rapport"
+                  placeholder={t.app.organizationPlaceholder}
+                  hint={t.app.organizationHint}
+                  locale={locale}
                 />
                 <div>
                   <InputField
                     type="select"
-                    label="Type organisatie"
+                    label={t.app.organizationType}
                     value={inputs.typeOrganisatie}
                     onChange={handleTypeChange}
-                    options={TYPE_ORGANISATIES}
+                    options={organizationTypeOptions(locale)}
                     hint={BRANCHE_OMSCHRIJVING[inputs.typeOrganisatie]}
+                    locale={locale}
                   />
                   {branchePresetApplied && (
                     <p className="mt-1 text-xs font-medium text-savings">
-                      ✓ Aannames aangepast aan {inputs.typeOrganisatie}
+                      {locale === 'nl' ? '✓ Aannames aangepast aan' : '✓ Assumptions adjusted for'} {inputs.typeOrganisatie}
                     </p>
                   )}
                 </div>
@@ -251,8 +264,10 @@ export default function App() {
                   type="slider"
                   label={
                     isOnderwijs
-                      ? 'Aantal studenten zorg-/welzijnsopleiding'
-                      : 'Aantal zorgmedewerkers met voorbehouden handelingen'
+                      ? locale === 'nl'
+                        ? 'Aantal studenten zorg-/welzijnsopleiding'
+                        : 'Number of healthcare/social care students'
+                      : t.app.employeesLabel
                   }
                   value={inputs.aantalMedewerkers}
                   onChange={handleAantalChange}
@@ -261,23 +276,28 @@ export default function App() {
                   step={1}
                   format="number"
                   unit=""
+                  locale={locale}
                 />
               </div>
             </section>
 
             {/* Huidige kosten */}
             <section className="group-card">
-              <h2 className="font-heading text-lg font-semibold text-careup-900">Huidige kosten</h2>
+              <h2 className="font-heading text-lg font-semibold text-careup-900">{t.app.currentCosts}</h2>
               <p className="mt-1 text-sm text-ink-muted">
-                Defaults zijn Nederlandse branchegemiddelden 2025-2026. Pas aan naar je werkelijke cijfers.
+                {t.app.currentCostsHint}
               </p>
               <div className="mt-4 space-y-5">
                 <InputField
                   type="slider"
                   label={
                     isOnderwijs
-                      ? `Skillslab-onderhoud/abonnement per ${persoonsLabel} per jaar`
-                      : `Skillslab-kosten per ${persoonsLabel} per jaar`
+                      ? locale === 'nl'
+                        ? `Skillslab-onderhoud/abonnement per ${persoonsLabel} per jaar`
+                        : `Skills lab maintenance/subscription per ${persoonsLabel} per year`
+                      : locale === 'nl'
+                        ? `Skillslab-kosten per ${persoonsLabel} per jaar`
+                        : `Skills lab costs per ${persoonsLabel} per year`
                   }
                   value={inputs.skillslabPerMedewerker}
                   onChange={(v) => setI('skillslabPerMedewerker', v)}
@@ -288,11 +308,16 @@ export default function App() {
                   unit="€"
                   tooltip={
                     isOnderwijs
-                      ? 'Eigen skillslab onderhoud, materialen-abonnement of huur per student per jaar. Voor zorgopleidingen typisch €60-€120/student.'
-                      : 'Jaarabonnement of toegang tot fysieke skillslab. Catharina Ziekenhuis €61,50, TMI bijscholing €229,95. Branchegemiddelde NL 2025-2026 ~€125 voor VVT, hoger voor ziekenhuis.'
+                      ? locale === 'nl'
+                        ? 'Eigen skillslab onderhoud, materialen-abonnement of huur per student per jaar. Voor zorgopleidingen typisch €60-€120/student.'
+                        : 'Own skills lab maintenance, materials subscription or rental per student per year. For healthcare education typically €60-€120/student.'
+                      : locale === 'nl'
+                        ? 'Jaarabonnement of toegang tot fysieke skillslab. Catharina Ziekenhuis €61,50, TMI bijscholing €229,95. Branchegemiddelde NL 2025-2026 ~€125 voor VVT, hoger voor ziekenhuis.'
+                        : 'Annual subscription or access to a physical skills lab. Catharina Hospital €61.50, TMI training €229.95. Dutch sector average 2025-2026 ~€125 for VVT, higher for hospitals.'
                   }
                   realisticMax={isOnderwijs ? 150 : 250}
                   hint=""
+                  locale={locale}
                 />
                 {!bestuurderModus && (
                   <div className="space-y-5">
@@ -300,21 +325,22 @@ export default function App() {
                   <>
                 <InputField
                   type="slider"
-                  label="Reistijd skillslab-bezoeken (uren per medewerker per jaar)"
+                  label={locale === 'nl' ? 'Reistijd skillslab-bezoeken (uren per medewerker per jaar)' : 'Travel time for skills lab visits (hours per employee per year)'}
                   value={inputs.verlorenUren}
                   onChange={(v) => setI('verlorenUren', v)}
                   min={0}
                   max={12}
                   step={0.5}
                   format="number"
-                  unit="uur"
-                  tooltip="Alleen reistijd + wachttijd + administratie rond fysieke skillslab-sessies. Hoger voor thuiszorg (~3-5u), lager voor organisaties met intern lab (~1-2u). Bijscholingsdagen tellen apart mee."
+                  unit={t.app.hourUnit}
+                  tooltip={locale === 'nl' ? 'Alleen reistijd + wachttijd + administratie rond fysieke skillslab-sessies. Hoger voor thuiszorg (~3-5u), lager voor organisaties met intern lab (~1-2u). Bijscholingsdagen tellen apart mee.' : 'Only travel time, waiting time and administration around physical skills lab sessions. Higher for home care (~3-5h), lower for organizations with an internal lab (~1-2h). Training days are counted separately.'}
                   realisticMax={8}
-                  warningMessage="Meer dan 8 uur reistijd/jaar is hoger dan gangbaar — alleen bijscholingsdagen tellen apart mee."
+                  warningMessage={locale === 'nl' ? 'Meer dan 8 uur reistijd/jaar is hoger dan gangbaar — alleen bijscholingsdagen tellen apart mee.' : 'More than 8 travel hours/year is above the usual range; training days are counted separately.'}
+                  locale={locale}
                 />
                 <InputField
                   type="slider"
-                  label="Reiskosten per medewerker per jaar"
+                  label={locale === 'nl' ? 'Reiskosten per medewerker per jaar' : 'Travel costs per employee per year'}
                   value={inputs.reiskostenPerMedewerker}
                   onChange={(v) => setI('reiskostenPerMedewerker', v)}
                   min={0}
@@ -322,12 +348,13 @@ export default function App() {
                   step={5}
                   format="euro"
                   unit="€"
-                  tooltip="Reiskostenvergoeding voor skillslab- en bijscholingsbezoeken. CAO-norm €0,23/km. Voorbeeld: 4 bezoeken × 65 km retour = €60/jr. VVT/thuiszorg hoger door verspreide locaties; ziekenhuis lager door intern lab."
+                  tooltip={locale === 'nl' ? 'Reiskostenvergoeding voor skillslab- en bijscholingsbezoeken. CAO-norm €0,23/km. Voorbeeld: 4 bezoeken × 65 km retour = €60/jr. VVT/thuiszorg hoger door verspreide locaties; ziekenhuis lager door intern lab.' : 'Travel reimbursement for skills lab and training visits. CAO norm €0.23/km. Example: 4 visits x 65 km return = €60/year. VVT/home care higher due to distributed locations; hospitals lower due to internal labs.'}
                   realisticMax={150}
+                  locale={locale}
                 />
                 <InputField
                   type="slider"
-                  label="Werkgeverskosten per uur"
+                  label={t.app.hourlyCostLabel}
                   value={inputs.uurtarief}
                   onChange={(v) => setI('uurtarief', v)}
                   min={22}
@@ -335,10 +362,11 @@ export default function App() {
                   step={1}
                   format="euro"
                   unit="€"
-                  tooltip="Bruto uurloon CAO VVT 2026 (€18-26 voor verpleegkundige niv. 4) + werkgeverslasten ~55% (sociale premies, vakantiegeld, eindejaarsuitkering, ORT). Ziekenhuis-personeel hoger (€42), ZZP-inhuur €45-60."
+                  tooltip={locale === 'nl' ? 'Bruto uurloon CAO VVT 2026 (€18-26 voor verpleegkundige niv. 4) + werkgeverslasten ~55% (sociale premies, vakantiegeld, eindejaarsuitkering, ORT). Ziekenhuis-personeel hoger (€42), ZZP-inhuur €45-60.' : 'Gross hourly wage under CAO VVT 2026 (€18-26 for level 4 nurses) + employer costs of about 55%. Hospital staff is higher (€42), freelance hiring €45-60.'}
                   realisticMin={25}
                   realisticMax={50}
-                  warningMessage="Werkgeverskosten buiten €25-€50/uur zijn ongebruikelijk voor zorg — controleer of je inclusief werkgeverslasten rekent."
+                  warningMessage={locale === 'nl' ? 'Werkgeverskosten buiten €25-€50/uur zijn ongebruikelijk voor zorg — controleer of je inclusief werkgeverslasten rekent.' : 'Employer costs outside €25-€50/hour are unusual for healthcare; check that employer costs are included.'}
+                  locale={locale}
                 />
                   </>
                 )}
@@ -346,8 +374,10 @@ export default function App() {
                   type="slider"
                   label={
                     isOnderwijs
-                      ? 'Praktijkuren fysiek skillslab per student per jaar'
-                      : 'Bijscholingsdagen voorbehouden handelingen per medewerker per jaar'
+                      ? locale === 'nl'
+                        ? 'Praktijkuren fysiek skillslab per student per jaar'
+                        : 'Physical skills lab practice hours per student per year'
+                      : t.app.trainingDaysLabel
                   }
                   value={inputs.bijscholingsdagen}
                   onChange={(v) => setI('bijscholingsdagen', v)}
@@ -355,19 +385,24 @@ export default function App() {
                   max={isOnderwijs ? 200 : 3}
                   step={isOnderwijs ? 5 : 0.25}
                   format="number"
-                  unit={isOnderwijs ? 'uur' : 'dag'}
+                  unit={isOnderwijs ? t.app.hourUnit : t.app.dayUnit}
                   tooltip={
                     isOnderwijs
-                      ? 'Aantal contacturen in fysiek skillslab per student per studiejaar. HBO-V/MBO-zorg typisch 40-80 uur, plus extra voor specialisaties.'
-                      : "VIG'ers moeten elke 3 jaar opnieuw getoetst worden, plus jaarlijkse opfris in praktijk. Default 1 dag/jaar conservatief — V&VN-richtlijn."
+                      ? locale === 'nl'
+                        ? 'Aantal contacturen in fysiek skillslab per student per studiejaar. HBO-V/MBO-zorg typisch 40-80 uur, plus extra voor specialisaties.'
+                        : 'Number of contact hours in a physical skills lab per student per academic year. Healthcare programs typically use 40-80 hours, plus extra for specializations.'
+                      : t.app.trainingDaysTooltip
                   }
+                  locale={locale}
                 />
                 <InputField
                   type="slider"
                   label={
                     isOnderwijs
-                      ? 'Kostprijs per uur fysiek skillslab (per student)'
-                      : 'Kosten per externe bijscholingsdag'
+                      ? locale === 'nl'
+                        ? 'Kostprijs per uur fysiek skillslab (per student)'
+                        : 'Cost per physical skills lab hour (per student)'
+                      : t.app.trainingCostLabel
                   }
                   value={inputs.kostenPerBijscholingsdag}
                   onChange={(v) => setI('kostenPerBijscholingsdag', v)}
@@ -378,30 +413,40 @@ export default function App() {
                   unit="€"
                   tooltip={
                     isOnderwijs
-                      ? 'Kostprijs per student per uur fysiek skillslab: instructeur (€50/u, ratio ~1:8 = €6/student) + materiaal/verbruik (€8-12/u) + lab-overhead. Default €18 conservatief.'
-                      : 'Cursusprijs zelf (excl. salaris). Marktgemiddelde NL: TMI €230 incl. praktijktoets, externe trainer in groepsverband €54-€100, ROC-cursus €200-€300, in-house trainer ~€150.'
+                      ? locale === 'nl'
+                        ? 'Kostprijs per student per uur fysiek skillslab: instructeur (€50/u, ratio ~1:8 = €6/student) + materiaal/verbruik (€8-12/u) + lab-overhead. Default €18 conservatief.'
+                        : 'Cost per student per physical skills lab hour: instructor (€50/h, ratio ~1:8 = €6/student) + materials (€8-12/h) + lab overhead. Default €18 is conservative.'
+                      : locale === 'nl'
+                        ? 'Cursusprijs zelf (excl. salaris). Marktgemiddelde NL: TMI €230 incl. praktijktoets, externe trainer in groepsverband €54-€100, ROC-cursus €200-€300, in-house trainer ~€150.'
+                        : 'Course price itself (excluding salary). Dutch market average: TMI €230 incl. practical assessment, external group trainer €54-€100, ROC course €200-€300, in-house trainer ~€150.'
                   }
                   realisticMax={isOnderwijs ? 50 : 300}
                   warningMessage={
                     isOnderwijs
-                      ? 'Boven €50/u skillslab-kostprijs is uitzonderlijk hoog voor zorgopleidingen.'
-                      : 'Cursussen boven €300/dag zijn ongebruikelijk — check of je niet per ongeluk meerdere dagen meerekent.'
+                      ? locale === 'nl'
+                        ? 'Boven €50/u skillslab-kostprijs is uitzonderlijk hoog voor zorgopleidingen.'
+                        : 'Above €50/h is exceptionally high for healthcare education skills lab costs.'
+                      : locale === 'nl'
+                        ? 'Cursussen boven €300/dag zijn ongebruikelijk — check of je niet per ongeluk meerdere dagen meerekent.'
+                        : 'Courses above €300/day are unusual; check that multiple days are not being counted by accident.'
                   }
+                  locale={locale}
                 />
                 {!isOnderwijs && (
                   <InputField
                     type="slider"
-                    label="Werkdaguren doorbetaald per bijscholingsdag"
+                    label={locale === 'nl' ? 'Werkdaguren doorbetaald per bijscholingsdag' : 'Paid working hours per training day'}
                     value={inputs.urenPerBijscholingsdag}
                     onChange={(v) => setI('urenPerBijscholingsdag', v)}
                     min={4}
                     max={10}
                     step={0.5}
                     format="number"
-                    unit="uur"
-                    tooltip="Een hele werkdag bijscholing = 8 uur doorbetaald loon (medewerker werkt niet, maar je betaalt wel salaris). Eventueel + vervangingskosten ZZP. Default 8u — dit is vaak vergeten in ROI-berekeningen."
+                    unit={t.app.hourUnit}
+                    tooltip={locale === 'nl' ? 'Een hele werkdag bijscholing = 8 uur doorbetaald loon (medewerker werkt niet, maar je betaalt wel salaris). Eventueel + vervangingskosten ZZP. Default 8u — dit is vaak vergeten in ROI-berekeningen.' : 'A full training day = 8 paid hours while the employee is not providing care. Potentially plus replacement costs. Default 8h; this is often forgotten in ROI calculations.'}
                     realisticMin={6}
                     realisticMax={9}
+                    locale={locale}
                   />
                 )}
                   </div>
@@ -409,8 +454,12 @@ export default function App() {
                 {bestuurderModus && (
                   <p className="text-xs text-ink-muted">
                     {isOnderwijs
-                      ? 'Praktijkuren-aantal en kostprijs zijn op gemiddeldes voor zorgopleidingen gezet. Schakel naar Sales-modus om deze aan te passen.'
-                      : 'Reiskosten, reistijd, uurtarief en bijscholingsdetails zijn op Nederlandse branchegemiddelden gezet. Schakel naar Sales-modus om deze aan te passen.'}
+                      ? locale === 'nl'
+                        ? 'Praktijkuren-aantal en kostprijs zijn op gemiddeldes voor zorgopleidingen gezet. Schakel naar Sales-modus om deze aan te passen.'
+                        : 'Practice hours and cost price are set to healthcare education averages. Switch to Sales mode to adjust them.'
+                      : locale === 'nl'
+                        ? 'Reiskosten, reistijd, uurtarief en bijscholingsdetails zijn op Nederlandse branchegemiddelden gezet. Schakel naar Sales-modus om deze aan te passen.'
+                        : 'Travel costs, travel time, hourly rate and training details are set to Dutch sector averages. Switch to Sales mode to adjust them.'}
                   </p>
                 )}
               </div>
@@ -419,7 +468,7 @@ export default function App() {
             {/* CareUp investering — vaste staffel-prijs */}
             <section className="group-card">
               <div className="flex items-baseline justify-between gap-2">
-                <h2 className="font-heading text-lg font-semibold text-careup-900">Investering in CareUp</h2>
+                <h2 className="font-heading text-lg font-semibold text-careup-900">{t.app.investment}</h2>
                 <a
                   href="https://careup.online/tarieven"
                   target="_blank"
@@ -438,41 +487,41 @@ export default function App() {
               {individueelGoedkoper ? (
                 <div className="mt-3 rounded border border-savings/30 bg-savings-light p-4">
                   <div className="text-xs font-medium uppercase tracking-wide text-savings-dark">
-                    Individueel jaarabo — voordeligst voor jouw aantal
+                    {locale === 'nl' ? 'Individueel jaarabo — voordeligst voor jouw aantal' : 'Individual annual subscription - cheapest for your number'}
                   </div>
                   <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
                     <span className="font-serif text-2xl font-semibold text-savings-dark">
                       €{effectievePrijs.toLocaleString('nl-NL', { maximumFractionDigits: 2 })}
                     </span>
                     <span className="text-sm text-savings-dark">
-                      per jaar — €{INDIVIDUEEL_JAARABO.toLocaleString('nl-NL', {
+                      {locale === 'nl' ? 'per jaar' : 'per year'} — €{INDIVIDUEEL_JAARABO.toLocaleString('nl-NL', {
                         minimumFractionDigits: 2,
                       })}/{persoonsLabel} × {inputs.aantalMedewerkers} {persoonsLabelMv}
                     </span>
                   </div>
                   <div className="mt-2 text-xs text-savings-dark/80">
-                    Voor minder dan 5 {persoonsLabelMv} is het individuele jaarabo voordeliger
-                    dan de instellingstaffel (€{vasteBandPrijs.toLocaleString('nl-NL')} vast).
-                    Vanaf 5 {persoonsLabelMv} schakelt de calculator automatisch over op het
-                    instellingstarief.
+                    {locale === 'nl'
+                      ? `Voor minder dan 5 ${persoonsLabelMv} is het individuele jaarabo voordeliger dan de instellingstaffel (€${vasteBandPrijs.toLocaleString('nl-NL')} vast). Vanaf 5 ${persoonsLabelMv} schakelt de calculator automatisch over op het instellingstarief.`
+                      : `For fewer than 5 ${persoonsLabelMv}, the individual annual subscription is cheaper than the institutional tier (€${vasteBandPrijs.toLocaleString('nl-NL')} fixed). From 5 ${persoonsLabelMv}, the calculator automatically switches to institutional pricing.`}
                   </div>
                 </div>
               ) : (
                 <div className="mt-3 rounded border border-savings/30 bg-savings-light p-4">
                   <div className="text-xs font-medium uppercase tracking-wide text-savings-dark">
-                    CareUp volumestaffel 2025 — band {formatBandLabel(huidigeBand)}
+                    {locale === 'nl' ? 'CareUp volumestaffel 2025' : 'CareUp volume tiers 2025'} — {locale === 'nl' ? 'band' : 'tier'} {formatBandLabel(huidigeBand)}
                   </div>
                   <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
                     <span className="font-serif text-2xl font-semibold text-savings-dark">
                       €{vasteBandPrijs.toLocaleString('nl-NL')}
                     </span>
                     <span className="text-sm text-savings-dark">
-                      per jaar — vaste licentie ({inputs.aantalMedewerkers} {persoonsLabelMv})
+                      {locale === 'nl' ? 'per jaar — vaste licentie' : 'per year - fixed license'} ({inputs.aantalMedewerkers} {persoonsLabelMv})
                     </span>
                   </div>
                   <div className="mt-2 text-xs text-savings-dark/80">
-                    Komt neer op €{staffelPrijs.toLocaleString('nl-NL', { maximumFractionDigits: 2 })}/{persoonsLabel}/jaar.
-                    Bij {inputs.aantalMedewerkers + 1} {persoonsLabelMv} val je in de volgende staffel-band.
+                    {locale === 'nl'
+                      ? `Komt neer op €${staffelPrijs.toLocaleString('nl-NL', { maximumFractionDigits: 2 })}/${persoonsLabel}/jaar. Bij ${inputs.aantalMedewerkers + 1} ${persoonsLabelMv} val je in de volgende staffel-band.`
+                      : `Equals €${staffelPrijs.toLocaleString('nl-NL', { maximumFractionDigits: 2 })}/${persoonsLabel}/year. At ${inputs.aantalMedewerkers + 1} ${persoonsLabelMv}, you move into the next pricing tier.`}
                   </div>
                 </div>
               )}
@@ -485,26 +534,26 @@ export default function App() {
                     onClick={() => setI('careUpLicentieOverride', effectievePrijs)}
                     className="text-xs font-medium text-careup-700 hover:text-careup-800 hover:underline"
                   >
-                    + Eigen contract-tarief invullen (afwijkend van staffel)
+                    {locale === 'nl' ? '+ Eigen contract-tarief invullen (afwijkend van staffel)' : '+ Enter custom contract price (different from tier)'}
                   </button>
                 ) : (
                   <div className="rounded border border-careup-200 bg-careup-50 p-3">
                     <div className="flex items-baseline justify-between gap-2">
                       <span className="text-xs font-medium uppercase tracking-wide text-careup-800">
-                        Override: eigen contract-tarief
+                        {locale === 'nl' ? 'Override: eigen contract-tarief' : 'Override: custom contract price'}
                       </span>
                       <button
                         type="button"
                         onClick={() => setI('careUpLicentieOverride', 0)}
                         className="text-xs font-medium text-careup-700 hover:text-careup-800 hover:underline"
                       >
-                        ↺ terug naar staffel
+                        {locale === 'nl' ? '↺ terug naar staffel' : '↺ back to tier'}
                       </button>
                     </div>
                     <div className="mt-2">
                       <InputField
                         type="slider"
-                        label="Totaal jaarbedrag CareUp-licentie"
+                        label={locale === 'nl' ? 'Totaal jaarbedrag CareUp-licentie' : 'Total annual CareUp license amount'}
                         value={inputs.careUpLicentieOverride ?? effectievePrijs}
                         onChange={(v) => setI('careUpLicentieOverride', v)}
                         min={Math.max(50, Math.round(effectievePrijs * 0.3))}
@@ -512,7 +561,8 @@ export default function App() {
                         step={Math.max(10, Math.round(effectievePrijs / 50) * 10)}
                         format="euro"
                         unit="€"
-                        tooltip="Vul hier het bedrag in dat in jullie offerte van CareUp staat — bijvoorbeeld bij maatwerkafspraken of meerjarige contracten."
+                        tooltip={locale === 'nl' ? 'Vul hier het bedrag in dat in jullie offerte van CareUp staat — bijvoorbeeld bij maatwerkafspraken of meerjarige contracten.' : 'Enter the amount from your CareUp quote, for example for custom agreements or multi-year contracts.'}
+                        locale={locale}
                       />
                     </div>
                   </div>
@@ -529,27 +579,32 @@ export default function App() {
                   className="flex w-full items-center justify-between text-left"
                 >
                   <h2 className="font-heading text-lg font-semibold text-careup-900">
-                    Geavanceerde aannames
+                    {t.app.advanced}
                   </h2>
                   <span className="text-sm font-medium text-careup-600">
-                    {advancedOpen ? '− verberg' : '+ toon'}
+                    {advancedOpen ? t.app.hide : t.app.show}
                   </span>
                 </button>
                 {advancedOpen && (
                   <div className="mt-4 space-y-5">
                     <p className="rounded bg-careup-50 p-3 text-xs text-careup-800">
-                      <strong>Wat vervangt CareUp?</strong> CareUp levert V&VN-geaccrediteerde toetsen, tentamens, BIG-herregistratiepunten en certificaten. Medewerkers halen alle benodigde accreditatiepunten voor BIG-herregistratie volledig via CareUp — fysieke bijscholing en skillslab-bezoeken zijn daarmee grotendeels overbodig.
+                      <strong>{locale === 'nl' ? 'Wat vervangt CareUp?' : 'What does CareUp replace?'}</strong>{' '}
+                      {locale === 'nl'
+                        ? 'CareUp levert V&VN-geaccrediteerde toetsen, tentamens, BIG-herregistratiepunten en certificaten. Medewerkers halen alle benodigde accreditatiepunten voor BIG-herregistratie volledig via CareUp — fysieke bijscholing en skillslab-bezoeken zijn daarmee grotendeels overbodig.'
+                        : 'CareUp provides V&VN-accredited assessments, exams, BIG re-registration points and certificates. Employees earn all required accreditation points for BIG re-registration through CareUp, making physical training and skills lab visits largely unnecessary.'}
                       {isOnderwijs && (
                         <>
                           <br />
-                          <strong className="block mt-2">Voor onderwijs ligt dit anders:</strong>
-                          studenten moeten skills voor het eerst leren — fysieke oefening blijft cruciaal, CareUp is aanvulling op practicum.
+                          <strong className="block mt-2">{locale === 'nl' ? 'Voor onderwijs ligt dit anders:' : 'For education this is different:'}</strong>
+                          {locale === 'nl'
+                            ? 'studenten moeten skills voor het eerst leren — fysieke oefening blijft cruciaal, CareUp is aanvulling op practicum.'
+                            : 'students are learning skills for the first time, so physical practice remains essential and CareUp supplements the practical training.'}
                         </>
                       )}
                     </p>
                     <InputField
                       type="slider"
-                      label="Reductie reistijd skillslab-bezoeken"
+                      label={locale === 'nl' ? 'Reductie reistijd skillslab-bezoeken' : 'Reduction in travel time for skills lab visits'}
                       value={Math.round(inputs.reductieVerlorenUren * 100)}
                       onChange={(v) => setI('reductieVerlorenUren', v / 100)}
                       min={0}
@@ -557,11 +612,12 @@ export default function App() {
                       step={5}
                       format="percent"
                       unit="%"
-                      tooltip="Medewerkers oefenen en toetsen op werkplek of thuis via CareUp — reistijd naar skillslab of bijscholingslocatie vervalt volledig."
+                      tooltip={locale === 'nl' ? 'Medewerkers oefenen en toetsen op werkplek of thuis via CareUp — reistijd naar skillslab of bijscholingslocatie vervalt volledig.' : 'Employees practice and take assessments at work or at home via CareUp, removing travel time to skills lab or training locations.'}
+                      locale={locale}
                     />
                     <InputField
                       type="slider"
-                      label="Reductie skillslab-bezoeken"
+                      label={t.app.skillslabReduction}
                       value={Math.round(inputs.reductieSkillslab * 100)}
                       onChange={(v) => setI('reductieSkillslab', v / 100)}
                       min={0}
@@ -569,11 +625,12 @@ export default function App() {
                       step={5}
                       format="percent"
                       unit="%"
-                      tooltip="CareUp neemt V&VN-geaccrediteerde toetsen en tentamens af — alle benodigde accreditatiepunten worden bijgeschreven in het V&VN Kwaliteitsregister. Fysieke skillslab-abonnementen zijn daarmee niet meer nodig."
+                      tooltip={locale === 'nl' ? 'CareUp neemt V&VN-geaccrediteerde toetsen en tentamens af — alle benodigde accreditatiepunten worden bijgeschreven in het V&VN Kwaliteitsregister. Fysieke skillslab-abonnementen zijn daarmee niet meer nodig.' : 'CareUp handles V&VN-accredited assessments and exams; all required accreditation points are added to the V&VN Quality Register. Physical skills lab subscriptions are therefore no longer needed.'}
+                      locale={locale}
                     />
                     <InputField
                       type="slider"
-                      label="Reductie externe bijscholingsdagen"
+                      label={t.app.trainingReduction}
                       value={Math.round(inputs.reductieBijscholing * 100)}
                       onChange={(v) => setI('reductieBijscholing', v / 100)}
                       min={0}
@@ -581,11 +638,12 @@ export default function App() {
                       step={5}
                       format="percent"
                       unit="%"
-                      tooltip="CareUp dekt theorie, toetsen en BIG-herregistratiepunten volledig via V&VN-accreditatie. Externe bijscholingsdagen — inclusief de doorbetaalde verloren werkdag — vervallen grotendeels."
+                      tooltip={locale === 'nl' ? 'CareUp dekt theorie, toetsen en BIG-herregistratiepunten volledig via V&VN-accreditatie. Externe bijscholingsdagen — inclusief de doorbetaalde verloren werkdag — vervallen grotendeels.' : 'CareUp fully covers theory, assessments and BIG re-registration points through V&VN accreditation. External training days, including paid lost workdays, largely disappear.'}
+                      locale={locale}
                     />
                     <InputField
                       type="slider"
-                      label="Reductie reiskosten"
+                      label={locale === 'nl' ? 'Reductie reiskosten' : 'Reduction in travel costs'}
                       value={Math.round(inputs.reductieReiskosten * 100)}
                       onChange={(v) => setI('reductieReiskosten', v / 100)}
                       min={0}
@@ -593,7 +651,8 @@ export default function App() {
                       step={5}
                       format="percent"
                       unit="%"
-                      tooltip="Omdat medewerkers niet meer naar skillslab of externe bijscholing reizen, vervalt de reiskostenvergoeding nagenoeg volledig."
+                      tooltip={locale === 'nl' ? 'Omdat medewerkers niet meer naar skillslab of externe bijscholing reizen, vervalt de reiskostenvergoeding nagenoeg volledig.' : 'Because employees no longer travel to skills lab or external training, travel reimbursement almost fully disappears.'}
+                      locale={locale}
                     />
                   </div>
                 )}
@@ -609,13 +668,13 @@ export default function App() {
                   className="flex w-full items-center justify-between text-left"
                 >
                   <h2 className="font-heading text-lg font-semibold text-careup-900">
-                    Toon berekeningen
+                    {t.app.showCalculations}
                   </h2>
                   <span className="text-sm font-medium text-careup-600">
-                    {showCalc ? '− verberg' : '+ toon'}
+                    {showCalc ? t.app.hide : t.app.show}
                   </span>
                 </button>
-                {showCalc && <CalculationBreakdown inputs={inputs} r={r} />}
+                {showCalc && <CalculationBreakdown inputs={inputs} r={r} locale={locale} copy={t.calculations} />}
               </section>
             )}
           </div>
@@ -623,7 +682,7 @@ export default function App() {
           {/* Rechter kolom: results (op mobiel BOVEN de inputs voor directe feedback) */}
           <aside className="order-1 lg:order-2 lg:col-span-5">
             <div className="lg:sticky lg:top-6 space-y-4">
-              <ResultsPanel r={r} inputs={inputs} bestuurderModus={bestuurderModus} />
+              <ResultsPanel r={r} inputs={inputs} bestuurderModus={bestuurderModus} copy={t.results} />
 
               {/* Demo CTA — lead conversie */}
               <DemoCTA besparing={r.besparing} organisatieNaam={inputs.organisatieNaam} />
@@ -631,7 +690,7 @@ export default function App() {
               {/* Actieknoppen */}
               <div className="grid grid-cols-2 gap-2 no-print">
                 <button
-                  onClick={() => exportToExcel(inputs, r)}
+                  onClick={() => exportToExcel(inputs, r, locale)}
                   className="btn-secondary justify-center"
                 >
                   <Download className="h-4 w-4" /> Excel
@@ -655,10 +714,17 @@ export default function App() {
         {/* Disclaimer */}
         <footer className="mt-12 border-t border-surface-line pt-6 text-xs text-ink-muted no-print">
           <p className="max-w-4xl">
-            <strong className="text-ink">Disclaimer:</strong> Deze calculator geeft een indicatie op basis van Nederlandse branchegemiddelden 2025-2026. De werkelijke besparing varieert per organisatie. Wil je dit valideren? Vraag een <a href="https://careup.online/organisatie-demo/" target="_blank" rel="noreferrer" className="font-medium text-careup-700 hover:underline">gratis 30-dagen demo</a> aan en test CareUp met je eigen team.
+            <strong className="text-ink">{t.app.disclaimerLabel}</strong>{' '}
+            {locale === 'nl'
+              ? 'Deze calculator geeft een indicatie op basis van Nederlandse branchegemiddelden 2025-2026. De werkelijke besparing varieert per organisatie. Wil je dit valideren? Vraag een '
+              : 'This calculator provides an estimate based on Dutch sector averages for 2025-2026. Actual savings vary by organization. Want to validate this? Request a '}
+            <a href="https://careup.online/organisatie-demo/" target="_blank" rel="noreferrer" className="font-medium text-careup-700 hover:underline">
+              {locale === 'nl' ? 'gratis 30-dagen demo' : 'free 30-day demo'}
+            </a>
+            {locale === 'nl' ? ' aan en test CareUp met je eigen team.' : ' and test CareUp with your own team.'}
           </p>
           <p className="mt-3">
-            CareUp · Virtual Learning Lab voor zorgprofessionals · Defaults gebaseerd op publieke marktdata (Catharina Ziekenhuis, TMI Academy, CAO VVT 2026).
+            {t.app.footerText}
           </p>
         </footer>
       </main>
@@ -666,13 +732,40 @@ export default function App() {
   );
 }
 
-const ModeToggle = ({ mode, onChange }: { mode: Mode; onChange: (m: Mode) => void }) => (
+const ModeToggle = ({
+  mode,
+  onChange,
+  copy,
+}: {
+  mode: Mode;
+  onChange: (m: Mode) => void;
+  copy: AppCopy;
+}) => (
   <div className="inline-flex items-center rounded border border-surface-line bg-surface-panel p-1">
     <ToggleBtn active={mode === 'sales'} onClick={() => onChange('sales')} icon={<Briefcase className="h-3.5 w-3.5" />}>
-      Sales-modus
+      {copy.salesMode}
     </ToggleBtn>
     <ToggleBtn active={mode === 'bestuurder'} onClick={() => onChange('bestuurder')} icon={<Users2 className="h-3.5 w-3.5" />}>
-      Bestuurder-modus
+      {copy.executiveMode}
+    </ToggleBtn>
+  </div>
+);
+
+const LanguageToggle = ({
+  locale,
+  onChange,
+  copy,
+}: {
+  locale: Locale;
+  onChange: (locale: Locale) => void;
+  copy: LanguageCopy;
+}) => (
+  <div className="inline-flex items-center rounded border border-surface-line bg-surface-panel p-1" aria-label={copy.label}>
+    <ToggleBtn active={locale === 'nl'} onClick={() => onChange('nl')} icon={<Languages className="h-3.5 w-3.5" />}>
+      {copy.nl}
+    </ToggleBtn>
+    <ToggleBtn active={locale === 'en'} onClick={() => onChange('en')} icon={<Languages className="h-3.5 w-3.5" />}>
+      {copy.en}
     </ToggleBtn>
   </div>
 );
@@ -705,12 +798,16 @@ const ToggleBtn = ({
 const CalculationBreakdown = ({
   inputs,
   r,
+  locale,
+  copy,
 }: {
   inputs: CalculatorInputs;
   r: ReturnType<typeof calculate>;
+  locale: Locale;
+  copy: CalculationCopy;
 }) => {
   const fmt = (n: number) =>
-    new Intl.NumberFormat('nl-NL', {
+    new Intl.NumberFormat(locale === 'nl' ? 'nl-NL' : 'en-US', {
       style: 'currency',
       currency: 'EUR',
       minimumFractionDigits: 0,
@@ -719,45 +816,47 @@ const CalculationBreakdown = ({
   return (
     <div className="mt-4 space-y-3 text-sm text-ink-soft">
       <div className="rounded bg-surface-panel p-3">
-        <div className="font-semibold text-ink">Huidige kosten ({inputs.aantalMedewerkers} medewerkers)</div>
+        <div className="font-semibold text-ink">
+          {copy.currentCosts} ({inputs.aantalMedewerkers} {copy.employees})
+        </div>
         <ul className="mt-1 space-y-0.5">
           <li>
-            Skillslab: {inputs.aantalMedewerkers} × {fmt(inputs.skillslabPerMedewerker)} = {fmt(r.huidigSkillslab)}
+            {copy.skillslab}: {inputs.aantalMedewerkers} × {fmt(inputs.skillslabPerMedewerker)} = {fmt(r.huidigSkillslab)}
           </li>
           <li>
-            Reistijd: {inputs.aantalMedewerkers} × {inputs.verlorenUren} u × {fmt(inputs.uurtarief)} = {fmt(r.huidigVerlorenUren)}
+            {locale === 'nl' ? 'Reistijd' : 'Travel time'}: {inputs.aantalMedewerkers} × {inputs.verlorenUren} u × {fmt(inputs.uurtarief)} = {fmt(r.huidigVerlorenUren)}
           </li>
           <li>
-            Reiskosten: {inputs.aantalMedewerkers} × {fmt(inputs.reiskostenPerMedewerker)} = {fmt(r.huidigReiskosten)}
+            {locale === 'nl' ? 'Reiskosten' : 'Travel costs'}: {inputs.aantalMedewerkers} × {fmt(inputs.reiskostenPerMedewerker)} = {fmt(r.huidigReiskosten)}
           </li>
           <li>
-            Bijscholing — cursus: {inputs.aantalMedewerkers} × {inputs.bijscholingsdagen} × {fmt(inputs.kostenPerBijscholingsdag)} = {fmt(r.huidigBijscholingCursus)}
+            {locale === 'nl' ? 'Bijscholing — cursus' : 'Training - course'}: {inputs.aantalMedewerkers} × {inputs.bijscholingsdagen} × {fmt(inputs.kostenPerBijscholingsdag)} = {fmt(r.huidigBijscholingCursus)}
           </li>
           <li>
-            Bijscholing — verloren werkdag: {inputs.aantalMedewerkers} × {inputs.bijscholingsdagen} × {inputs.urenPerBijscholingsdag} u × {fmt(inputs.uurtarief)} = {fmt(r.huidigBijscholingVerlorenDag)}
+            {locale === 'nl' ? 'Bijscholing — verloren werkdag' : 'Training - lost workday'}: {inputs.aantalMedewerkers} × {inputs.bijscholingsdagen} × {inputs.urenPerBijscholingsdag} u × {fmt(inputs.uurtarief)} = {fmt(r.huidigBijscholingVerlorenDag)}
           </li>
-          <li className="pt-1 font-semibold text-ink">Totaal huidige kosten: {fmt(r.huidigeKosten)}</li>
+          <li className="pt-1 font-semibold text-ink">{copy.totalCurrentCosts}: {fmt(r.huidigeKosten)}</li>
         </ul>
       </div>
       <div className="rounded bg-careup-50 p-3">
-        <div className="font-semibold text-careup-900">Met CareUp</div>
+        <div className="font-semibold text-careup-900">{copy.withCareUp}</div>
         <ul className="mt-1 space-y-0.5">
           <li>
-            Licentie (vaste staffel-prijs voor {inputs.aantalMedewerkers} medewerkers): {fmt(r.careUpLicentie)}
+            {copy.license} ({locale === 'nl' ? 'vaste staffel-prijs voor' : 'fixed tier price for'} {inputs.aantalMedewerkers} {copy.employees}): {fmt(r.careUpLicentie)}
           </li>
           <li>
-            Resterend skillslab ({Math.round((1 - inputs.reductieSkillslab) * 100)}%): {fmt(r.restSkillslab)}
+            {copy.remainingSkillslab} ({Math.round((1 - inputs.reductieSkillslab) * 100)}%): {fmt(r.restSkillslab)}
           </li>
           <li>
-            Resterende reistijd ({Math.round((1 - inputs.reductieVerlorenUren) * 100)}%): {fmt(r.restVerlorenUren)}
+            {locale === 'nl' ? 'Resterende reistijd' : 'Remaining travel time'} ({Math.round((1 - inputs.reductieVerlorenUren) * 100)}%): {fmt(r.restVerlorenUren)}
           </li>
           <li>
-            Resterende reiskosten ({Math.round((1 - inputs.reductieReiskosten) * 100)}%): {fmt(r.restReiskosten)}
+            {locale === 'nl' ? 'Resterende reiskosten' : 'Remaining travel costs'} ({Math.round((1 - inputs.reductieReiskosten) * 100)}%): {fmt(r.restReiskosten)}
           </li>
           <li>
-            Resterende bijscholing ({Math.round((1 - inputs.reductieBijscholing) * 100)}%): {fmt(r.restBijscholing)}
+            {copy.remainingTraining} ({Math.round((1 - inputs.reductieBijscholing) * 100)}%): {fmt(r.restBijscholing)}
           </li>
-          <li className="pt-1 font-semibold text-careup-900">Totaal met CareUp: {fmt(r.metCareUpKosten)}</li>
+          <li className="pt-1 font-semibold text-careup-900">{copy.totalWithCareUp}: {fmt(r.metCareUpKosten)}</li>
         </ul>
       </div>
     </div>

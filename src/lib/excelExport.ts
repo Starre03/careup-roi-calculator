@@ -1,105 +1,107 @@
 import * as XLSX from 'xlsx';
 import type { CalculatorInputs, CalculatorResults } from './calculations';
 import { todayISO } from './formatters';
+import type { Locale } from './i18n';
 
-export const exportToExcel = (inputs: CalculatorInputs, r: CalculatorResults): void => {
+export const exportToExcel = (inputs: CalculatorInputs, r: CalculatorResults, locale: Locale = 'nl'): void => {
   const wb = XLSX.utils.book_new();
+  const tx = (nl: string, en: string) => (locale === 'nl' ? nl : en);
   const datum = todayISO();
-  const naam = inputs.organisatieNaam || 'Onbekend';
+  const naam = inputs.organisatieNaam || tx('Onbekend', 'Unknown');
 
   // Tab 1: Samenvatting
   const samenvatting: (string | number)[][] = [
-    ['CareUp ROI-calculator — Samenvatting'],
+    [tx('CareUp ROI-calculator — Samenvatting', 'CareUp ROI calculator — Summary')],
     [],
-    ['Organisatie', naam],
-    ['Type', inputs.typeOrganisatie],
-    ['Aantal medewerkers', inputs.aantalMedewerkers],
-    ['Datum rapport', datum],
+    [tx('Organisatie', 'Organization'), naam],
+    [tx('Type', 'Type'), inputs.typeOrganisatie],
+    [tx('Aantal medewerkers', 'Number of employees'), inputs.aantalMedewerkers],
+    [tx('Datum rapport', 'Report date'), datum],
     [],
-    ['HOOFDCIJFERS (per jaar)'],
-    ['Huidige kosten', round(r.huidigeKosten)],
-    ['Kosten met CareUp', round(r.metCareUpKosten)],
-    ['Jaarlijkse besparing', round(r.besparing)],
-    ['ROI op licentie', `${round(r.roi)}%`],
+    [tx('HOOFDCIJFERS (per jaar)', 'KEY FIGURES (per year)')],
+    [tx('Huidige kosten', 'Current costs'), round(r.huidigeKosten)],
+    [tx('Kosten met CareUp', 'Costs with CareUp'), round(r.metCareUpKosten)],
+    [tx('Jaarlijkse besparing', 'Annual savings'), round(r.besparing)],
+    [tx('ROI op licentie', 'ROI on license'), `${round(r.roi)}%`],
     [
-      'Terugverdientijd (maanden)',
-      r.terugverdientijdMaanden !== null ? round(r.terugverdientijdMaanden, 1) : 'n.v.t.',
+      tx('Terugverdientijd (maanden)', 'Payback period (months)'),
+      r.terugverdientijdMaanden !== null ? round(r.terugverdientijdMaanden, 1) : tx('n.v.t.', 'n/a'),
     ],
     [],
-    ['PER MEDEWERKER'],
-    ['Huidige kosten per medewerker', round(r.huidigPerMedewerker)],
-    ['CareUp kosten per medewerker', round(r.metCareUpPerMedewerker)],
+    [tx('PER MEDEWERKER', 'PER EMPLOYEE')],
+    [tx('Huidige kosten per medewerker', 'Current costs per employee'), round(r.huidigPerMedewerker)],
+    [tx('CareUp kosten per medewerker', 'CareUp costs per employee'), round(r.metCareUpPerMedewerker)],
     [],
-    ['CUMULATIEF'],
-    ['Besparing 3 jaar', round(r.cumulatief3jaar)],
+    [tx('CUMULATIEF', 'CUMULATIVE')],
+    [tx('Besparing 3 jaar', 'Savings over 3 years'), round(r.cumulatief3jaar)],
     [],
-    ['SCHOLINGSBUDGET'],
-    ['Wettelijk budget (2% loonsom)', round(r.scholingsbudgetTotaal)],
-    ['CareUp als % van budget', `${round(r.pctScholingsbudget, 1)}%`],
+    [tx('SCHOLINGSBUDGET', 'TRAINING BUDGET')],
+    [tx('Wettelijk budget (2% loonsom)', 'Statutory budget (2% payroll)'), round(r.scholingsbudgetTotaal)],
+    [tx('CareUp als % van budget', 'CareUp as % of budget'), `${round(r.pctScholingsbudget, 1)}%`],
   ];
   const ws1 = XLSX.utils.aoa_to_sheet(samenvatting);
   ws1['!cols'] = [{ wch: 38 }, { wch: 22 }];
-  XLSX.utils.book_append_sheet(wb, ws1, 'Samenvatting');
+  XLSX.utils.book_append_sheet(wb, ws1, tx('Samenvatting', 'Summary'));
 
   // Tab 2: Berekening
   const berekening: (string | number)[][] = [
-    ['Berekening — alle inputs en tussenstappen'],
+    [tx('Berekening — alle inputs en tussenstappen', 'Calculation — all inputs and intermediate steps')],
     [],
-    ['INPUTS'],
-    ['Aantal medewerkers (N)', inputs.aantalMedewerkers],
-    ['Skillslab-kosten per medewerker per jaar', inputs.skillslabPerMedewerker],
-    ['Reistijd skillslab-bezoeken (u/mw/jr)', inputs.verlorenUren],
-    ['Reiskosten per medewerker per jaar', inputs.reiskostenPerMedewerker],
-    ['Werkgeverskosten per uur', inputs.uurtarief],
-    ['Bijscholingsdagen per medewerker per jaar', inputs.bijscholingsdagen],
-    ['Kosten per externe bijscholingsdag', inputs.kostenPerBijscholingsdag],
-    ['Werkdaguren doorbetaald per bijscholingsdag', inputs.urenPerBijscholingsdag],
+    [tx('INPUTS', 'INPUTS')],
+    [tx('Aantal medewerkers (N)', 'Number of employees (N)'), inputs.aantalMedewerkers],
+    [tx('Skillslab-kosten per medewerker per jaar', 'Skills lab costs per employee per year'), inputs.skillslabPerMedewerker],
+    [tx('Reistijd skillslab-bezoeken (u/mw/jr)', 'Travel time for skills lab visits (h/employee/year)'), inputs.verlorenUren],
+    [tx('Reiskosten per medewerker per jaar', 'Travel costs per employee per year'), inputs.reiskostenPerMedewerker],
+    [tx('Werkgeverskosten per uur', 'Employer cost per hour'), inputs.uurtarief],
+    [tx('Bijscholingsdagen per medewerker per jaar', 'Training days per employee per year'), inputs.bijscholingsdagen],
+    [tx('Kosten per externe bijscholingsdag', 'Cost per external training day'), inputs.kostenPerBijscholingsdag],
+    [tx('Werkdaguren doorbetaald per bijscholingsdag', 'Paid working hours per training day'), inputs.urenPerBijscholingsdag],
     [
-      'CareUp licentie (vaste staffel-prijs)',
+      tx('CareUp licentie (vaste staffel-prijs)', 'CareUp license (fixed tier price)'),
       inputs.careUpLicentieOverride && inputs.careUpLicentieOverride > 0
-        ? `${round(inputs.careUpLicentieOverride)} (eigen contract-tarief)`
-        : `${round(r.careUpLicentie)} (CareUp volumestaffel 2025)`,
+        ? `${round(inputs.careUpLicentieOverride)} (${tx('eigen contract-tarief', 'custom contract price')})`
+        : `${round(r.careUpLicentie)} (${tx('CareUp volumestaffel 2025', 'CareUp volume tier 2025')})`,
     ],
-    ['Reductie reistijd', `${round(inputs.reductieVerlorenUren * 100)}%`],
-    ['Reductie skillslab-bezoeken', `${round(inputs.reductieSkillslab * 100)}%`],
-    ['Reductie bijscholingsdagen', `${round(inputs.reductieBijscholing * 100)}%`],
-    ['Reductie reiskosten', `${round(inputs.reductieReiskosten * 100)}%`],
+    [tx('Reductie reistijd', 'Reduction in travel time'), `${round(inputs.reductieVerlorenUren * 100)}%`],
+    [tx('Reductie skillslab-bezoeken', 'Reduction in skills lab visits'), `${round(inputs.reductieSkillslab * 100)}%`],
+    [tx('Reductie bijscholingsdagen', 'Reduction in training days'), `${round(inputs.reductieBijscholing * 100)}%`],
+    [tx('Reductie reiskosten', 'Reduction in travel costs'), `${round(inputs.reductieReiskosten * 100)}%`],
     [],
-    ['HUIDIGE KOSTEN (uitsplitsing)'],
-    ['Skillslab totaal = N × skillslab', round(r.huidigSkillslab)],
-    ['Reistijd totaal = N × uren × tarief', round(r.huidigVerlorenUren)],
-    ['Reiskosten totaal = N × reiskosten/mw', round(r.huidigReiskosten)],
-    ['Bijscholing cursus = N × dagen × kosten/dag', round(r.huidigBijscholingCursus)],
-    ['Bijscholing verloren werkdag = N × dagen × uren × tarief', round(r.huidigBijscholingVerlorenDag)],
-    ['Som huidige kosten', round(r.huidigeKosten)],
+    [tx('HUIDIGE KOSTEN (uitsplitsing)', 'CURRENT COSTS (breakdown)')],
+    [tx('Skillslab totaal = N × skillslab', 'Skills lab total = N × skills lab'), round(r.huidigSkillslab)],
+    [tx('Reistijd totaal = N × uren × tarief', 'Travel time total = N × hours × rate'), round(r.huidigVerlorenUren)],
+    [tx('Reiskosten totaal = N × reiskosten/mw', 'Travel costs total = N × travel costs/employee'), round(r.huidigReiskosten)],
+    [tx('Bijscholing cursus = N × dagen × kosten/dag', 'Training course = N × days × cost/day'), round(r.huidigBijscholingCursus)],
+    [tx('Bijscholing verloren werkdag = N × dagen × uren × tarief', 'Training lost workday = N × days × hours × rate'), round(r.huidigBijscholingVerlorenDag)],
+    [tx('Som huidige kosten', 'Sum current costs'), round(r.huidigeKosten)],
     [],
-    ['KOSTEN MET CAREUP (uitsplitsing)'],
-    ['CareUp licentie = vaste staffel-prijs', round(r.careUpLicentie)],
-    ['Resterend skillslab = huidig × (1-reductie)', round(r.restSkillslab)],
-    ['Resterende reistijd', round(r.restVerlorenUren)],
-    ['Resterende reiskosten', round(r.restReiskosten)],
-    ['Resterende bijscholing (cursus + verloren werkdag)', round(r.restBijscholing)],
-    ['Som met CareUp', round(r.metCareUpKosten)],
+    [tx('KOSTEN MET CAREUP (uitsplitsing)', 'COSTS WITH CAREUP (breakdown)')],
+    [tx('CareUp licentie = vaste staffel-prijs', 'CareUp license = fixed tier price'), round(r.careUpLicentie)],
+    [tx('Resterend skillslab = huidig × (1-reductie)', 'Remaining skills lab = current × (1-reduction)'), round(r.restSkillslab)],
+    [tx('Resterende reistijd', 'Remaining travel time'), round(r.restVerlorenUren)],
+    [tx('Resterende reiskosten', 'Remaining travel costs'), round(r.restReiskosten)],
+    [tx('Resterende bijscholing (cursus + verloren werkdag)', 'Remaining training (course + lost workday)'), round(r.restBijscholing)],
+    [tx('Som met CareUp', 'Sum with CareUp'), round(r.metCareUpKosten)],
     [],
-    ['UITKOMSTEN'],
-    ['Besparing = Huidig - Met CareUp', round(r.besparing)],
-    ['ROI = Besparing / Licentie × 100%', `${round(r.roi)}%`],
+    [tx('UITKOMSTEN', 'OUTCOMES')],
+    [tx('Besparing = Huidig - Met CareUp', 'Savings = Current - With CareUp'), round(r.besparing)],
+    [tx('ROI = Besparing / Licentie × 100%', 'ROI = Savings / License × 100%'), `${round(r.roi)}%`],
     [
-      'Terugverdientijd = Licentie / Besparing × 12',
+      tx('Terugverdientijd = Licentie / Besparing × 12', 'Payback period = License / Savings × 12'),
       r.terugverdientijdMaanden !== null
-        ? `${round(r.terugverdientijdMaanden, 1)} maanden`
-        : 'n.v.t.',
+        ? `${round(r.terugverdientijdMaanden, 1)} ${tx('maanden', 'months')}`
+        : tx('n.v.t.', 'n/a'),
     ],
   ];
   const ws2 = XLSX.utils.aoa_to_sheet(berekening);
   ws2['!cols'] = [{ wch: 50 }, { wch: 22 }];
-  XLSX.utils.book_append_sheet(wb, ws2, 'Berekening');
+  XLSX.utils.book_append_sheet(wb, ws2, tx('Berekening', 'Calculation'));
 
   // Tab 3: Bronnen
   const bronnen: string[][] = [
-    ['Bronnen & Aannames — geverifieerde marktdata 2025-2026'],
+    [tx('Bronnen & Aannames — geverifieerde marktdata 2025-2026', 'Sources & Assumptions — verified market data 2025-2026')],
     [],
-    ['Categorie', 'Bron / Citaat'],
+    [tx('Categorie', 'Category'), tx('Bron / Citaat', 'Source / Quote')],
     [
       'Skillslab-kosten',
       'Catharina Ziekenhuis SkillsLab jaarabonnement: €61,50. TMI Academy bijscholing voorbehouden handelingen: €229,95. Branchegemiddelde NL 2025-2026: ~€125/medewerker/jaar voor VVT, €165 voor ziekenhuis.',
@@ -151,7 +153,7 @@ export const exportToExcel = (inputs: CalculatorInputs, r: CalculatorResults): v
   ];
   const ws3 = XLSX.utils.aoa_to_sheet(bronnen);
   ws3['!cols'] = [{ wch: 28 }, { wch: 110 }];
-  XLSX.utils.book_append_sheet(wb, ws3, 'Bronnen & Aannames');
+  XLSX.utils.book_append_sheet(wb, ws3, tx('Bronnen & Aannames', 'Sources'));
 
   const safeNaam = naam.replace(/[^a-zA-Z0-9-_]/g, '_') || 'Onbekend';
   const filename = `CareUp-ROI-${safeNaam}-${datum}.xlsx`;
